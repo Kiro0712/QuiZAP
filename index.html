@@ -89,9 +89,16 @@
 
     <div class="sep"></div>
 
-    <label>検索（問題文に含まれる文字）</label>
-    <input id="searchBox" placeholder="例：プラザ / 公害 / NATO など" />
-    <div class="list" id="searchList" style="margin-top:10px"></div>
+    <label>検索</label>
+<div class="row">
+  <select id="searchTarget">
+    <option value="q">問題（問題文）</option>
+    <option value="a">答え</option>
+    <option value="both">問題＋答え</option>
+  </select>
+  <input id="searchBox" placeholder="例：プラザ / 公害 / NATO など" />
+</div>
+<div class="list" id="searchList" style="margin-top:10px"></div>
 
     <div class="sep"></div>
 
@@ -503,29 +510,51 @@ function renderStats(){
 }
 
 function renderSearch(keyword){
-  const kw = keyword.trim();
+  const kw = (keyword ?? "").trim();
+  const target = el("searchTarget") ? el("searchTarget").value : "q";
   const box = el("searchList");
   box.innerHTML = "";
+
   if(!kw){
     box.innerHTML = `<div class="muted small">検索すると一致した問題がここに出ます。</div>`;
     return;
   }
+
   const items = state.data[state.section] || [];
   const hit = [];
+
   items.forEach((it,i)=>{
-    if(it.q.includes(kw)) hit.push({it,i});
+    const qText = it.q || "";
+    const aText = (it.a || []).join(" / ");
+    const hay =
+      target === "q" ? qText :
+      target === "a" ? aText :
+      (qText + "\n" + aText);
+
+    if(hay.includes(kw)) hit.push({it,i});
   });
+
   if(hit.length===0){
     box.innerHTML = `<div class="muted small">見つかりませんでした。</div>`;
     return;
   }
+
   hit.slice(0,50).forEach(({it,i})=>{
     const div = document.createElement("div");
     div.className="item";
     const id = qid(state.section,i);
-    div.innerHTML = `<b>${it.q}</b><div class="small muted">答え：${it.a[0]} ${state.mistakes.has(id) ? " / ミス済" : ""}</div>`;
+
+    // どこにヒットしたか表示
+    const qHit = it.q.includes(kw);
+    const aHit = (it.a || []).some(x => (x || "").includes(kw));
+    const where =
+      target === "both" ? (qHit && aHit ? "（問題＋答え）" : qHit ? "（問題）" : "（答え）") :
+      target === "q" ? "（問題）" : "（答え）";
+
+    div.innerHTML = `<b>${it.q} <span class="small muted">${where}</span></b>
+      <div class="small muted">答え：${it.a[0]} ${state.mistakes.has(id) ? " / ミス済" : ""}</div>`;
+
     div.onclick = ()=>{
-      // jump to that question
       state.reviewMode = false;
       state.order = [i];
       state.idx = -1;
@@ -565,7 +594,7 @@ function exportData(){
 }
 
 function resetStats(){
-  if(!confirm("進捗（正解/不正解/連続正解/ミス）をリセットします。OK？")) return;
+  if(!confirm("進捗（正解/不正解/連続正解/ミス）をリセットします。よろしいですか？")) return;
   state.stats = {seen:0, ok:0, ng:0, streak:0};
   state.mistakes = new Set();
   renderStats();
@@ -596,6 +625,7 @@ function wire(){
     makeOrder(false);
     hideAnswer();
     renderSearch(el("searchBox").value);
+    el("searchTarget").addEventListener("change", ()=>renderSearch(el("searchBox").value));
     save();
     nextQuestion();
   });
