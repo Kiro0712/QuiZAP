@@ -110,7 +110,7 @@
         <button id="btnApplyData" class="good">反映</button>
         <button id="btnExportData">JSONをコピー</button>
       </div>
-      <p class="small muted">※間違って壊したら、ページ再読み込みで元に戻せます（保存済みの進捗は残ります）。</p>
+      <p class="small muted">※入力を間違えて戻せなくなった際は、ページ再読み込みで元に戻せます（保存済みの進捗は残ります）。</p>
     </details>
   </section>
 
@@ -125,7 +125,7 @@
         <button id="btnJudge" class="primary">判定</button>
         <button id="btnGiveUp" class="bad">わからない</button>
       </div>
-      <p class="small muted">判定はゆるめ（空白や全角/半角の違いは無視）。同義語は「別解」に入れてあります。</p>
+      <p class="small muted">同義語は「別解」にあります。</p>
     </div>
 
     <div style="margin-top:12px;display:none" id="answerBox" class="a"></div>
@@ -516,7 +516,7 @@ function renderSearch(keyword){
   box.innerHTML = "";
 
   if(!kw){
-    box.innerHTML = `<div class="muted small">検索すると一致した問題がここに出ます。</div>`;
+    box.innerHTML = `<div class="muted small">検索すると一致した問題・答えがここに出ます。</div>`;
     return;
   }
 
