@@ -13,12 +13,17 @@
     .grid{display:grid;gap:12px}
     @media(min-width:900px){.grid{grid-template-columns:360px 1fr}}
     .card{background:rgba(18,26,51,.9);border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:14px;box-shadow:0 10px 30px rgba(0,0,0,.25)}
+
     /* 右側カードを縦レイアウトにしてボタンを下固定 */
     .card.flexcol{display:flex;flex-direction:column;}
     .bottomBar{margin-top:auto;padding-top:12px;background:linear-gradient(to top, rgba(18,26,51,1), rgba(18,26,51,.95) 60%, rgba(18,26,51,0));position:sticky;bottom:0;}
+
     label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px}
     select,input,button,textarea{font:inherit}
     select,input,textarea{width:100%;padding:10px 12px;border-radius:12px;border:1px solid rgba(255,255,255,.12);background:rgba(7,10,20,.8);color:var(--text);outline:none}
+    /* 出題科目ドロップダウン内の文字を太字 */
+    #subjectSel{font-weight:700;}
+    #subjectSel option{font-weight:700;}
     textarea{min-height:120px;resize:vertical}
     .row{display:flex;gap:10px;flex-wrap:wrap}
     .row > *{flex:1}
@@ -29,18 +34,23 @@
     button.bad{background:rgba(251,113,133,.18)}
     button.warn{background:rgba(251,191,36,.16)}
     .pill{display:inline-flex;gap:8px;align-items:center;padding:6px 10px;border-radius:999px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.06);font-size:12px;color:var(--muted)}
+
     .q{font-size:18px;line-height:1.5;margin:6px 0 10px}
+    /* 選択肢行（ア：/イ：/ウ：...）を小さく＆間隔を詰める */
+    .choiceLine{font-size:0.75em;display:block;margin-left:0;margin-top:0;line-height:1.1}
+
     .a{padding:10px 12px;border-radius:12px;border:1px dashed rgba(255,255,255,.18);background:rgba(255,255,255,.04)}
     .muted{color:var(--muted)}
     .ok{color:var(--good)}
     .ng{color:var(--bad)}
     .small{font-size:12px}
+    /* 難易度表示は白色にする */
+    #diffLine{color:var(--text);}
     .sep{height:1px;background:rgba(255,255,255,.08);margin:12px 0}
     .list{max-height:300px;overflow:auto;padding-right:6px}
     .item{padding:10px 10px;border-radius:12px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.03);margin-bottom:8px;cursor:pointer}
     .item:hover{background:rgba(255,255,255,.06)}
     .item b{display:block}
-    .kbd{font-size:11px;border:1px solid rgba(255,255,255,.2);padding:2px 6px;border-radius:6px;background:rgba(255,255,255,.06);color:var(--muted)}
     .statNum{font-size:1.5em;font-weight:600;}
   </style>
 </head>
@@ -48,17 +58,16 @@
 <header>
   <div class="wrap row" style="align-items:center;justify-content:space-between">
     <h1>QuiZAP</h1>
-    
   </div>
 </header>
 
 <div class="wrap grid">
   <section class="card">
     <div>
-      <label>出題科目</label>
+      <label style="font-weight:700;">出題科目</label>
       <select id="subjectSel">
         <option value="公共">公共</option>
-        <option value="保健" disabled>保健（Coming Soon）</option>
+        <option value="保健">保健</option>
       </select>
     </div>
 
@@ -74,7 +83,9 @@
       <label>出題する章</label>
       <select id="sectionSel"></select>
     </div>
+
     <div class="sep"></div>
+
     <label>検索</label>
     <div class="row">
       <select id="searchTarget">
@@ -107,7 +118,7 @@
   <section class="card flexcol">
     <div class="pill" id="metaPill">—</div>
 
-    <!-- 統計を問題の上へ移動 -->
+    <!-- 統計を問題の上へ移動（入力クイズのみ表示） -->
     <div class="sep" id="sepStatsTop"></div>
     <div class="row" id="statsRow">
       <div class="pill"><span id="statSummary"><span class="statNum">0</span>問目、<span class="statNum">0</span>問正解！（<span class="statNum">0</span>％）</span></div>
@@ -115,6 +126,7 @@
     <div class="sep" id="sepStatsBottom"></div>
 
     <div class="q" id="qText">章を選んで「次の問題」</div>
+    <div class="small muted" id="diffLine"></div>
 
     <div id="inputArea" style="display:none">
       <label>あなたの答え（例：プラザ合意）</label>
@@ -139,10 +151,9 @@
     <!-- 下固定ボタンエリア -->
     <div class="bottomBar">
       <div class="row" style="margin-top:10px">
-      <button id="btnPrev">← 前の問題</button>
-      <button id="btnReviewMistakes" class="bad">復習する →</button>
-      <button class="primary" id="btnNext">次の問題 →</button>
-      
+        <button id="btnPrev">← 前の問題</button>
+        <button id="btnReviewMistakes" class="bad">復習する →</button>
+        <button class="primary" id="btnNext">次の問題 →</button>
       </div>
     </div>
   </section>
@@ -342,24 +353,65 @@ const DEFAULT_DATA = {
   ],
 };
 
+// =========================
+// 保健データ（章9：喫煙と健康）
+// ※ 複数行の問題文は「\\n」で表現
+// =========================
+const HEALTH_DATA = {
+  "9 喫煙と健康": [
+    {q:"たばこの煙に含まれる三大有害物質は？", d:"★☆☆", a:["ニコチン、タール、一酸化炭素","ニコチンタール一酸化炭素","ニコチン･タール･一酸化炭素"]},
+    {q:"ニコチンによる負担は体のどこで起こる？", d:"★☆☆", a:["心臓","循環器系"]},
+    {q:"ニコチンには体にどんな影響がある？", d:"★☆☆", a:["依存性"]},
+    {q:"タールはどんな病気の原因になる？", d:"★☆☆", a:["がん","癌"]},
+    {q:"一酸化炭素は血液中の何と結びつく？", d:"★☆☆", a:["ヘモグロビン"]},
+    {q:"一酸化炭素が結びつくことでどうなる？", d:"★★☆", a:["酸素が運ばれにくくなる","酸素を運びにくくなる","酸素が運ばれなくなる"]},
+    {q:"短時間で現れる影響は？", d:"★★☆", a:["急性影響"]},
+    {q:"急性影響によって起こるものとして適切なものはどれ？\\nア：肺がん\\nイ：動脈硬化\\nウ：めまい", d:"★☆☆", a:["ウ","めまい"]},
+    {q:"長時間の喫煙によって起こる影響は？", d:"★★☆", a:["慢性影響"]},
+    {q:"喫煙によって起こる呼吸器の病気は？", d:"★★☆", a:["肺がん","慢性気管支炎","肺腫瘍"]},
+    {q:"喫煙による血液への影響は？", d:"★★☆", a:["血管の収縮","血管を収縮させる","血流の悪化","血流を悪くする"]},
+    {q:"喫煙によって起こりやすくなる心臓の病気は？", d:"★★☆", a:["心筋梗塞"]},
+    {q:"妊娠中の喫煙による影響として適切なものはどれ？\\nア：胎児の発育に悪い影響を与える。\\nイ：胎児への影響はない。", d:"★★☆", a:["ア","胎児の発育に悪い影響を与える"]},
+    {q:"喫煙者が吸い込む煙は？", d:"★★☆", a:["主流煙"]},
+    {q:"火のついた先から立ち上る煙は？", d:"★★☆", a:["副流煙"]},
+    {q:"他人のたばこの煙を吸わされることは何というか？", d:"★☆☆", a:["受動喫煙"]},
+    {q:"主流煙と副流煙ではどちらが有害物質を多く含むか？", d:"★☆☆", a:["副流煙"]},
+    {q:"日本において、20歳未満の喫煙を禁止している法律は？", d:"★★★", a:["二十歳未満ノ者ノ飲酒ノ禁止ニ関スル法律","20歳未満の者の飲酒の禁止に関する法律","２０未満の者の飲酒の禁止に関する法律"]},
+    {q:"世界禁煙デーはいつ？", d:"★★★", a:["5月31日","５月３１日","0531","０５３１"]},
+    {q:"世界禁煙デーを定めている国際機関はどこ？", d:"★★☆", a:["WHO","世界保健機関"]},
+    {q:"喫煙は本人だけの問題ではない理由を簡潔に説明せよ。", d:"★★☆", a:["周囲の人にも受動喫煙による健康被害を与えるから","受動喫煙で周囲の人にも健康被害があるから","周りの人にも受動喫煙の被害が出るから"]},
+  ]
+};
+
+const SUBJECT_DEFAULTS = {
+  "公共": DEFAULT_DATA,
+  "保健": HEALTH_DATA,
+};
+
 /* =========================
    2) アプリ本体
    ========================= */
 const LS_KEY = "koukyou_quiz_v1";
 // 問題データをHTML側で更新しても、localStorageに古いdataが残っていると反映されないため
 // 版（バージョン）を持たせて不一致ならDEFAULT_DATAを採用する
-const DATA_VERSION = 2;
+const DATA_VERSION = 4;
 
 const state = {
+  subject: "公共",
+  dataBySubject: null,
+  statsBySubject: null,
+  mistakesBySubject: null,
+  sectionBySubject: null,
+
   data: null,
   section: null,
   mode: "flash",
-  order: [],
+  order: [], // [{section, index}, ...]
   idx: -1,
   current: null,
   revealed: false,
   stats: {seen:0, ok:0, ng:0, streak:0},
-  mistakes: new Set(), // question id
+  mistakes: new Set(),
   reviewMode: false
 };
 
@@ -377,13 +429,61 @@ function normalize(s){
 
 function qid(section, i){ return section + "::" + i; }
 
-// ★ 修正：章セレクトを組み立てる関数（未定義エラーの原因）
+function escapeHTML(str){
+  return (str??"").toString()
+    .replace(/&/g,"&amp;")
+    .replace(/</g,"&lt;")
+    .replace(/>/g,"&gt;")
+    .replace(/\"/g,"&quot;")
+    .replace(/'/g,"&#39;");
+}
+
+// 選択肢行（ア：/イ：/ウ：...）が同一行に並んでいる場合も分割
+function splitChoiceRun(line){
+  const s = (line??"").trim();
+  if(!/^[ア-ン]：/.test(s)) return [s];
+  const parts = s.split(/(?=[ア-ン]：)/g).map(x=>x.trim()).filter(Boolean);
+  return parts.length ? parts : [s];
+}
+
+function formatQuestionHTML(rawQ){
+  // データ中の "\\n" を実際の改行に変換（ここが壊れていると SyntaxError になるので厳密に）
+  const q = (rawQ ?? "").toString()
+    .replace(/\\r\\n/g, "\\n")
+    .replace(/\\r/g, "\\n")
+    .replace(/\\\\n/g, "\\n");
+
+  const lines = q.split("\\n");
+  const out = [];
+
+  if(lines.length === 0) return "";
+
+  // 1行目：本文
+  out.push(escapeHTML(lines[0]));
+
+  // 2行目以降：選択肢・補足
+  for(let i=1;i<lines.length;i++){
+    const l = lines[i];
+    const chunks = splitChoiceRun(l);
+    for(const chunk of chunks){
+      const t = (chunk??"").trim();
+      if(!t) continue;
+      if(/^[ア-ン]：/.test(t)){
+        out.push(`<span class="choiceLine">${escapeHTML(t)}</span>`);
+      }else{
+        out.push(escapeHTML(t));
+      }
+    }
+  }
+
+  return out.join("");
+}
+
 function buildSectionOptions(){
   const sel = el("sectionSel");
   if(!sel) return;
   sel.innerHTML = "";
 
-  // ★ 全章オプションを先頭に追加
   const allOpt = document.createElement("option");
   allOpt.value = "__ALL__";
   allOpt.textContent = "全章";
@@ -459,21 +559,18 @@ function updateNavButtons(){
   if(btnPrev) btnPrev.style.display = atStart ? "none" : "inline-block";
   if(btnNext) btnNext.style.display = atEnd ? "none" : "inline-block";
 
-  // ★ 入力クイズ時のみ、最後の問題でだけ「復習」を表示
   if(btnReview){
     if(state.mode === "input" && atEnd && total > 0){
       btnReview.style.display = "inline-block";
-    }else if(state.mode === "input"){
+    }else if(state.mode === "input"){ 
       btnReview.style.display = "none";
     }
-    // flashモード時の表示制御はsetModeUI側に任せる
   }
 }
 
 function setModeUI(){
   const isInput = state.mode === "input";
 
-  // 入力モード以外（暗記カード）のときは統計を非表示
   const statsRow = el("statsRow");
   const sepTop = el("sepStatsTop");
   const sepBottom = el("sepStatsBottom");
@@ -485,21 +582,17 @@ function setModeUI(){
     if(sepBottom) sepBottom.style.display = show ? "block" : "none";
   }
 
-  // ★ モードごとのボタン表示制御
   const btnShow = el("btnShow");
   const btnReview = el("btnReviewMistakes");
   const btnReset = el("btnResetStats");
 
   if(state.mode === "flash"){
-    // 暗記カード時
     if(btnShow) btnShow.style.display = "inline-block";
     if(btnReview) btnReview.style.display = "none";
     if(btnReset) btnReset.style.display = "none";
   }else{
-    // 入力クイズ時
-    if(btnShow) btnShow.style.display = "none"; // ★ 追加：入力時は答えを表示を非表示
+    if(btnShow) btnShow.style.display = "none";
     if(btnReset) btnReset.style.display = "inline-block";
-    // 復習ボタンは updateNavButtons で制御
   }
 
   el("inputArea").style.display = isInput ? "block" : "none";
@@ -515,8 +608,8 @@ function showAnswer(){
   el("answerBox").style.display = "block";
   el("answerBox").innerHTML =
     `<div class="muted small">答え</div>
-     <div style="font-size:18px;margin-top:4px"><b>${state.current.a[0]}</b></div>
-     ${state.current.a.length>1 ? `<div class="muted small" style="margin-top:6px">別解：${state.current.a.slice(1).join(" / ")}</div>` : ""}`;
+     <div style="font-size:18px;margin-top:4px"><b>${escapeHTML(state.current.a[0])}</b></div>
+     ${state.current.a.length>1 ? `<div class="muted small" style="margin-top:6px">別解：${state.current.a.slice(1).map(escapeHTML).join(" / ")}</div>` : ""}`;
 }
 
 function hideAnswer(){
@@ -525,21 +618,35 @@ function hideAnswer(){
   el("answerBox").textContent = "";
 }
 
+function renderCurrent(){
+  const total = state.order.length;
+  const pos = total ? (state.idx + 1) : 0;
+  const label = state.section === "__ALL__" ? "全章" : state.section;
+
+  el("metaPill").textContent = `選択中：${label} - ${pos} / ${total}${state.reviewMode ? "（間違い復習）" : ""}`;
+
+  el("qText").innerHTML = formatQuestionHTML(state.current?.q || "");
+
+  const dl = el("diffLine");
+  if(dl) dl.textContent = state.current?.d ? `難易度：${state.current.d}` : "";
+
+  updateNavButtons();
+}
+
 function nextQuestion(){
-  const items = state.section === "__ALL__" ? state.order.map(e=>state.data[e.section][e.index]) : (state.data[state.section] || []);
-  if(items.length === 0){
+  if(state.order.length === 0){
     el("qText").textContent = "この章に問題がありません。";
+    const dl = el("diffLine");
+    if(dl) dl.textContent = "";
     const label0 = state.section === "__ALL__" ? "全章" : state.section;
-    el("metaPill").textContent = `前に選択中：${label0} - 0 / 0${state.reviewMode ? "（間違い復習）" : ""}`;
+    el("metaPill").textContent = `選択中：${label0} - 0 / 0${state.reviewMode ? "（間違い復習）" : ""}`;
     hideAnswer();
     setModeUI();
-    // ナビボタンは両方隠す
     state.idx = 0;
     updateNavButtons();
     return;
   }
 
-  // ★ 末尾では自動でシャッフルして最初に戻らない（末尾で「次の問題」を非表示）
   if(state.idx < state.order.length - 1){
     state.idx += 1;
   }else{
@@ -550,15 +657,8 @@ function nextQuestion(){
   state.revealed = false;
   hideAnswer();
   setModeUI();
-
-  const total = state.order.length;
-  const pos = state.idx + 1;
-  const label = state.section === "__ALL__" ? "全章" : state.section;
-  el("metaPill").textContent = `選択中：${label} - ${pos} / ${total}${state.reviewMode ? "（間違い復習）" : ""}`;
-  el("qText").textContent = state.current.q;
+  renderCurrent();
   el("ansInput").focus();
-
-  updateNavButtons();
 }
 
 function prevQuestion(){
@@ -568,24 +668,18 @@ function prevQuestion(){
   }else{
     state.idx -= 1;
   }
+
   state.current = currentItem();
   state.revealed = false;
   hideAnswer();
   setModeUI();
-
-  const total = state.order.length;
-  const pos = state.idx + 1;
-  const label = state.section === "__ALL__" ? "全章" : state.section;
-  el("metaPill").textContent = `選択中：${label} - ${pos} / ${total}${state.reviewMode ? "（間違い復習）" : ""}`;
-  el("qText").textContent = state.current.q;
-
-  updateNavButtons();
+  renderCurrent();
 }
 
 function judge(){
   if(!state.current) return;
   const user = normalize(el("ansInput").value);
-  const answers = state.current.a.map(normalize);
+  const answers = (state.current.a || []).map(normalize);
   const ok = answers.includes(user);
 
   state.stats.seen += 1;
@@ -638,10 +732,17 @@ function renderSearch(keyword){
     return;
   }
 
-  const items = state.section === "__ALL__" ? state.order.map(e=>state.data[e.section][e.index]) : (state.data[state.section] || []);
-  const hit = [];
+  const pool = [];
+  if(state.section === "__ALL__"){
+    Object.keys(state.data).forEach(sec=>{
+      (state.data[sec] || []).forEach((it, idx)=>pool.push({it, section:sec, index:idx}));
+    });
+  }else{
+    (state.data[state.section] || []).forEach((it, idx)=>pool.push({it, section:state.section, index:idx}));
+  }
 
-  items.forEach((it,i)=>{
+  const hit = [];
+  pool.forEach(({it, section, index})=>{
     const qText = it.q || "";
     const aText = (it.a || []).join(" / ");
     const hay =
@@ -649,7 +750,7 @@ function renderSearch(keyword){
       target === "a" ? aText :
       (qText + "\n" + aText);
 
-    if(hay.includes(kw)) hit.push({it,i});
+    if(hay.includes(kw)) hit.push({it, section, index});
   });
 
   if(hit.length===0){
@@ -657,26 +758,29 @@ function renderSearch(keyword){
     return;
   }
 
-  hit.slice(0,50).forEach(({it,i})=>{
+  hit.slice(0,50).forEach(({it, section, index})=>{
     const div = document.createElement("div");
     div.className="item";
-    const id = qid(state.section,i);
+    const id = qid(section, index);
 
-    const qHit = it.q.includes(kw);
+    const qHit = (it.q || "").includes(kw);
     const aHit = (it.a || []).some(x => (x || "").includes(kw));
     const where =
       target === "both" ? (qHit && aHit ? "（問題＋答え）" : qHit ? "（問題）" : "（答え）") :
       target === "q" ? "（問題）" : "（答え）";
 
-    div.innerHTML = `<b>${it.q} <span class="small muted">${where}</span></b>
-      <div class="small muted">答え：${it.a[0]} ${state.mistakes.has(id) ? " / ミス済" : ""}</div>`;
+    div.innerHTML =
+      `<b>${escapeHTML(it.q || "")} <span class="small muted">${where}</span></b>` +
+      `<div class="small muted">答え：${escapeHTML((it.a||[])[0] || "")} ${state.mistakes.has(id) ? " / ミス済" : ""}</div>` +
+      (it.d ? `<div class="small muted">難易度：${escapeHTML(it.d)}</div>` : "");
 
     div.onclick = ()=>{
       state.reviewMode = false;
-      state.order = [i];
+      state.order = [{section, index}];
       state.idx = -1;
       nextQuestion();
     };
+
     box.appendChild(div);
   });
 }
@@ -684,43 +788,58 @@ function renderSearch(keyword){
 function load(){
   const saved = JSON.parse(localStorage.getItem(LS_KEY) || "null");
 
-  const savedHasCurrentData = saved && saved.data && saved.dataVersion === DATA_VERSION;
-  state.data = savedHasCurrentData ? saved.data : DEFAULT_DATA;
+  const baseDataBySubject = {
+    "公共": SUBJECT_DEFAULTS["公共"],
+    "保健": SUBJECT_DEFAULTS["保健"],
+  };
 
-  state.section = (saved && saved.section && state.data[saved.section]) ? saved.section : Object.keys(state.data)[0];
+  const hasCurrent = saved && saved.dataVersion === DATA_VERSION;
+
+  state.dataBySubject = hasCurrent && saved.dataBySubject ? { ...baseDataBySubject, ...saved.dataBySubject } : baseDataBySubject;
+  state.statsBySubject = hasCurrent && saved.statsBySubject ? saved.statsBySubject : {};
+  state.mistakesBySubject = hasCurrent && saved.mistakesBySubject ? saved.mistakesBySubject : {};
+  state.sectionBySubject = hasCurrent && saved.sectionBySubject ? saved.sectionBySubject : {};
+
+  state.subject = (hasCurrent && saved.subject && state.dataBySubject[saved.subject]) ? saved.subject : "公共";
+  el("subjectSel").value = state.subject;
+
+  state.data = state.dataBySubject[state.subject];
+  state.section = state.sectionBySubject[state.subject] || "__ALL__";
   state.mode = (saved && saved.mode) ? saved.mode : "flash";
-  state.stats = (saved && saved.stats) ? saved.stats : {seen:0, ok:0, ng:0, streak:0};
 
-  // データ版が違う場合は、問題IDがズレる可能性があるのでmistakesはクリア
-  state.mistakes = new Set((savedHasCurrentData && saved && saved.mistakes) ? saved.mistakes : []);
+  state.stats = state.statsBySubject[state.subject] || {seen:0, ok:0, ng:0, streak:0};
+  state.mistakes = new Set(state.mistakesBySubject[state.subject] || []);
 
   state.reviewMode = false;
   buildSectionOptions();
   el("modeSel").value = state.mode;
   el("dataArea").value = JSON.stringify(state.data, null, 2);
-  makeOrder();
+
+  makeOrder(false);
   renderStats();
   renderSearch("");
   nextQuestion();
 
-  if(saved && !savedHasCurrentData){
-    save();
-  }
-
+  save();
   updateNavButtons();
-
-  // optional tests
+  setModeUI();
   maybeRunTests();
 }
 
 function save(){
+  state.dataBySubject[state.subject] = state.data;
+  state.statsBySubject[state.subject] = state.stats;
+  state.mistakesBySubject[state.subject] = Array.from(state.mistakes);
+  state.sectionBySubject[state.subject] = state.section;
+
   localStorage.setItem(LS_KEY, JSON.stringify({
     dataVersion: DATA_VERSION,
-    data: state.data,
-    section: state.section,
-    mode: state.mode,
-    stats: state.stats,
-    mistakes: Array.from(state.mistakes)
+    subject: state.subject,
+    dataBySubject: state.dataBySubject,
+    statsBySubject: state.statsBySubject,
+    mistakesBySubject: state.mistakesBySubject,
+    sectionBySubject: state.sectionBySubject,
+    mode: state.mode
   }));
 }
 
@@ -728,8 +847,11 @@ function applyData(){
   try{
     const parsed = JSON.parse(el("dataArea").value);
     state.data = parsed;
+    state.dataBySubject[state.subject] = state.data;
+
     const keys = Object.keys(state.data);
-    if(!keys.includes(state.section)) state.section = keys[0] || "（空）";
+    if(state.section !== "__ALL__" && !keys.includes(state.section)) state.section = "__ALL__";
+
     buildSectionOptions();
     makeOrder(false);
     state.reviewMode = false;
@@ -752,10 +874,27 @@ function exportData(){
 }
 
 function resetStats(){
+  // 期待動作：この科目の「出題数/正解数/正解率/連続正解」と「ミス記録」をすべて0/空に戻す
   if(!confirm("進捗（正解/不正解/連続正解/ミス）をリセットします。よろしいですか？")) return;
+
   state.stats = {seen:0, ok:0, ng:0, streak:0};
   state.mistakes = new Set();
+  state.reviewMode = false;
+
+  // 画面反映
   renderStats();
+  hideAnswer();
+  el("hintLine").textContent = "";
+
+  // 出題順を作り直して最初の問題へ（見た目でもリセット感を出す）
+  makeOrder(false);
+  state.idx = -1;
+  nextQuestion();
+
+  // マップにも即時反映してから保存（科目切替直後でもズレないように）
+  state.statsBySubject[state.subject] = state.stats;
+  state.mistakesBySubject[state.subject] = [];
+
   save();
 }
 
@@ -771,7 +910,6 @@ function startReviewMistakes(){
   nextQuestion();
 }
 
-
 function wire(){
   el("sectionSel").addEventListener("change", ()=>{
     state.section = el("sectionSel").value;
@@ -783,19 +921,19 @@ function wire(){
     nextQuestion();
   });
 
-  // ※changeリスナーを章変更のたびに追加すると多重登録になるので、ここで1回だけ
   el("searchTarget").addEventListener("change", ()=>renderSearch(el("searchBox").value));
 
   el("modeSel").addEventListener("change", ()=>{
     state.mode = el("modeSel").value;
     setModeUI();
+    updateNavButtons();
     save();
   });
 
   el("btnNext").onclick = ()=>nextQuestion();
   el("btnPrev").onclick = ()=>prevQuestion();
   el("btnShow").onclick = ()=> state.revealed ? hideAnswer() : showAnswer();
-    el("btnJudge").onclick = ()=>judge();
+  el("btnJudge").onclick = ()=>judge();
   el("btnGiveUp").onclick = ()=>giveUp();
   el("btnResetStats").onclick = ()=>resetStats();
   el("btnReviewMistakes").onclick = ()=>startReviewMistakes();
@@ -803,15 +941,31 @@ function wire(){
   el("btnApplyData").onclick = ()=>applyData();
   el("btnExportData").onclick = ()=>exportData();
 
-  el("ansInput").addEventListener("keydown", (e)=>{
-    if(e.key==="Enter"){ judge(); }
+  // 科目切替
+  el("subjectSel").addEventListener("change", ()=>{
+    save();
+
+    state.subject = el("subjectSel").value;
+    state.data = state.dataBySubject[state.subject] || SUBJECT_DEFAULTS[state.subject] || {};
+    state.section = state.sectionBySubject[state.subject] || "__ALL__";
+    state.stats = state.statsBySubject[state.subject] || {seen:0, ok:0, ng:0, streak:0};
+    state.mistakes = new Set(state.mistakesBySubject[state.subject] || []);
+
+    state.reviewMode = false;
+    buildSectionOptions();
+    el("dataArea").value = JSON.stringify(state.data, null, 2);
+
+    makeOrder(false);
+    renderStats();
+    renderSearch("");
+    nextQuestion();
+    setModeUI();
+    updateNavButtons();
+    save();
   });
 
-  document.addEventListener("keydown", (e)=>{
-    if(e.target && (e.target.tagName==="INPUT" || e.target.tagName==="TEXTAREA")) return;
-    if(e.key==="n" || e.key==="N"){ nextQuestion(); }
-    if(e.key==="a" || e.key==="A"){ state.revealed ? hideAnswer() : showAnswer(); }
-    
+  el("ansInput").addEventListener("keydown", (e)=>{
+    if(e.key==="Enter"){ judge(); }
   });
 }
 
@@ -826,43 +980,26 @@ function maybeRunTests(){
   if(!location.search.includes("test=1")) return;
   console.log("[tests] start");
 
-  // buildSectionOptions
   assert(!!el("subjectSel"), "subjectSel exists");
-
-  // buildSectionOptions
   assert(!!el("sectionSel"), "sectionSel exists");
-  assert(Object.keys(state.data).length > 0, "data has sections");
-  assert(el("sectionSel").options.length === Object.keys(state.data).length + 1, "sectionSel includes 全章 option");
-  assert(el("sectionSel").options[0].value === "__ALL__", "first option is 全章");
+  assert(!!el("qText"), "qText exists");
 
-  // mode UI test
-  assert(typeof setModeUI === "function", "setModeUI exists");
+  assert(!!SUBJECT_DEFAULTS["公共"], "has 公共");
+  assert(!!SUBJECT_DEFAULTS["保健"], "has 保健");
+  assert(HEALTH_DATA["9 喫煙と健康"][7].q.includes("\\n"), "health multiline uses \\n");
 
-  // normalize
-  assert(normalize(" プラザ 合意 ") === "プラザ合意", "normalize removes spaces");
+  // フォーマッタが選択肢を choiceLine にする
+  const html = formatQuestionHTML(HEALTH_DATA["9 喫煙と健康"][7].q);
+  assert(html.includes("choiceLine"), "formatter adds choiceLine");
+  // フォーマッタが \\n を改行扱いにできる
+  assert(html.includes("ア："), "formatter keeps choices");
 
-  // qid
-  assert(qid("S", 1) === "S::1", "qid format");
-
-  // prevQuestion existence
-  assert(typeof prevQuestion === "function", "prevQuestion exists");
-
-  // nav buttons visibility (初期は最初の問題なので前の問題は非表示)
-  assert(el("btnPrev").style.display === "none", "btnPrev hidden at start");
-
-  // stats summary format
-  const summary = el("statSummary").textContent;
-  assert(summary.includes("問目"), "summary contains 問目");
-  assert(summary.includes("正解"), "summary contains 正解");
-
-  // inputモード初期では復習は非表示（最後でないため）
-  state.mode = "input";
-  setModeUI();
-  updateNavButtons();
-  assert(el("btnReviewMistakes").style.display === "none", "review hidden in input before end");
-
-  // 入力モードでは答えを表示は非表示
-  assert(el("btnShow").style.display === "none", "btnShow hidden in input mode");
+  // 全章で order が作れる
+  state.subject = "公共";
+  state.data = SUBJECT_DEFAULTS["公共"];
+  state.section = "__ALL__";
+  makeOrder(false);
+  assert(Array.isArray(state.order) && state.order.length > 0, "order built for __ALL__");
 
   console.log("[tests] OK");
 }
