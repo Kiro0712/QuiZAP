@@ -21,9 +21,11 @@
     label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px}
     select,input,button,textarea{font:inherit}
     select,input,textarea{width:100%;padding:10px 12px;border-radius:12px;border:1px solid rgba(255,255,255,.12);background:rgba(7,10,20,.8);color:var(--text);outline:none}
+
     /* 出題科目ドロップダウン内の文字を太字 */
     #subjectSel{font-weight:700;}
     #subjectSel option{font-weight:700;}
+
     textarea{min-height:120px;resize:vertical}
     .row{display:flex;gap:10px;flex-wrap:wrap}
     .row > *{flex:1}
@@ -36,6 +38,7 @@
     .pill{display:inline-flex;gap:8px;align-items:center;padding:6px 10px;border-radius:999px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.06);font-size:12px;color:var(--muted)}
 
     .q{font-size:18px;line-height:1.5;margin:6px 0 10px}
+
     /* 選択肢行（ア：/イ：/ウ：...）を小さく＆間隔を詰める */
     .choiceLine{font-size:0.75em;display:block;margin-left:0;margin-top:0;line-height:1.1}
 
@@ -44,8 +47,10 @@
     .ok{color:var(--good)}
     .ng{color:var(--bad)}
     .small{font-size:12px}
+
     /* 難易度表示は白色にする */
     #diffLine{color:var(--text);}
+
     .sep{height:1px;background:rgba(255,255,255,.08);margin:12px 0}
     .list{max-height:300px;overflow:auto;padding-right:6px}
     .item{padding:10px 10px;border-radius:12px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.03);margin-bottom:8px;cursor:pointer}
@@ -100,8 +105,8 @@
     <div class="sep"></div>
 
     <details>
-      <summary class="muted">答えデータの編集（JSON）</summary>
-      <p class="small muted">このJSONを編集→「反映」すると問題・答えを自由に追加/修正できます。※オンライン上では更新されないため、もし問題や答えの間違いを発見した際は、クラスLINEにご報告をお願いします。</p>
+      <summary class="muted">データの編集（JSON・管理用）</summary>
+      <p class="small muted">問題・答えに誤りがある場合は、ここで修正できます。※デバイス内に保存されます。※オンライン上では更新されないため、間違いを発見した際は、LINEにてご報告をお願いします。</p>
       <textarea id="dataArea"></textarea>
       <div class="row" style="margin-top:10px">
         <button id="btnApplyData" class="good">反映</button>
@@ -132,10 +137,10 @@
       <label>あなたの答え（例：プラザ合意）</label>
       <input id="ansInput" autocomplete="off" placeholder="ここに入力" />
       <div class="row" style="margin-top:10px">
-        <button id="btnJudge" class="primary">判定</button>
+        <button id="btnJudge" class="primary">正誤判定</button>
         <button id="btnGiveUp" class="bad">わからない</button>
       </div>
-      <p class="small muted">同義語は「別解」にあります。</p>
+      <p class="small muted">一部問題や文章で答える問題には別解があります。文章で答える問題の場合、正しい答えを入力しても正解とならない場合があります。</p>
     </div>
 
     <!-- 暗記カード用：問題の下に表示する答えボタン -->
@@ -354,7 +359,7 @@ const DEFAULT_DATA = {
 };
 
 // =========================
-// 保健データ（章9：喫煙と健康）
+// 保健データ（章9：喫煙と健康 / 章10：飲酒と健康）
 // ※ 複数行の問題文は「\\n」で表現
 // =========================
 const HEALTH_DATA = {
@@ -366,12 +371,12 @@ const HEALTH_DATA = {
     {q:"一酸化炭素は血液中の何と結びつく？", d:"★☆☆", a:["ヘモグロビン"]},
     {q:"一酸化炭素が結びつくことでどうなる？", d:"★★☆", a:["酸素が運ばれにくくなる","酸素を運びにくくなる","酸素が運ばれなくなる"]},
     {q:"短時間で現れる影響は？", d:"★★☆", a:["急性影響"]},
-    {q:"急性影響によって起こるものとして適切なものはどれ？\\nア：肺がん\\nイ：動脈硬化\\nウ：めまい", d:"★☆☆", a:["ウ","めまい"]},
+    {q:"急性影響によって起こるものとして適切なものはどれ？\nア：肺がん\nイ：動脈硬化\nウ：めまい", d:"★☆☆", a:["ウ","めまい"]},
     {q:"長時間の喫煙によって起こる影響は？", d:"★★☆", a:["慢性影響"]},
     {q:"喫煙によって起こる呼吸器の病気は？", d:"★★☆", a:["肺がん","慢性気管支炎","肺腫瘍"]},
     {q:"喫煙による血液への影響は？", d:"★★☆", a:["血管の収縮","血管を収縮させる","血流の悪化","血流を悪くする"]},
     {q:"喫煙によって起こりやすくなる心臓の病気は？", d:"★★☆", a:["心筋梗塞"]},
-    {q:"妊娠中の喫煙による影響として適切なものはどれ？\\nア：胎児の発育に悪い影響を与える。\\nイ：胎児への影響はない。", d:"★★☆", a:["ア","胎児の発育に悪い影響を与える"]},
+    {q:"妊娠中の喫煙による影響として適切なものはどれ？\nア：胎児の発育に悪い影響を与える。\nイ：胎児への影響はない。", d:"★★☆", a:["ア","胎児の発育に悪い影響を与える"]},
     {q:"喫煙者が吸い込む煙は？", d:"★★☆", a:["主流煙"]},
     {q:"火のついた先から立ち上る煙は？", d:"★★☆", a:["副流煙"]},
     {q:"他人のたばこの煙を吸わされることは何というか？", d:"★☆☆", a:["受動喫煙"]},
@@ -380,6 +385,73 @@ const HEALTH_DATA = {
     {q:"世界禁煙デーはいつ？", d:"★★★", a:["5月31日","５月３１日","0531","０５３１"]},
     {q:"世界禁煙デーを定めている国際機関はどこ？", d:"★★☆", a:["WHO","世界保健機関"]},
     {q:"喫煙は本人だけの問題ではない理由を簡潔に説明せよ。", d:"★★☆", a:["周囲の人にも受動喫煙による健康被害を与えるから","受動喫煙で周囲の人にも健康被害があるから","周りの人にも受動喫煙の被害が出るから"]},
+  ],
+
+  "10 飲酒と健康": [
+    {q:"アルコールは脳のどの部分から影響を及ぼすか、最初に働きが低下する部位を答えよ。", d:"★★☆", a:["大脳新皮質"]},
+    {q:"アルコールの影響がさらに進むと、大脳辺縁系や小脳にどのような影響が出るか？", d:"★☆☆", a:["感情の変化・運動失調","感情の変化","運動失調","ふらつき"]},
+    {q:"アルコールが延髄まで影響するとどうなるか。", d:"★★☆", a:["呼吸中枢がまひし、意識不明や死に至ることがある","呼吸中枢が麻痺し意識不明や死に至ることがある","呼吸中枢が麻痺する"]},
+    {q:"アルコールの主成分（化学名）を答えよ。", d:"★☆☆", a:["エタノール","アルコール"]},
+    {q:"アルコールには中枢神経をどのようにする作用があるか？", d:"★★☆", a:["抑制する作用","中枢神経抑制作用","中枢神経を抑制する"]},
+    {q:"未成年者の飲酒が法律で禁止されている理由を簡潔に答えよ。", d:"★★☆", a:["成長期であり心身への影響が大きいから","発育への悪影響があるから","心身への影響が大きいから"]},
+    {q:"日本で未成年者の飲酒を禁止している法律は何か。", d:"★★☆", a:["未成年者飲酒禁止法"]},
+    {q:"体内に入ったアルコールは主にどこで分解されるか？", d:"★☆☆", a:["肝臓"]},
+    {q:"アルコールが分解されるときにできる有害物質は何か？", d:"★☆☆", a:["アセトアルデヒド"]},
+    {q:"アセトアルデヒドを分解する酵素は何か。", d:"★★☆", a:["ALDH","アルデヒド脱水素酵素"]},
+    {q:"ALDH2の働きが弱い人はどのような体質になりやすいか？", d:"★★✩", a:["お酒に弱い体質","酒に弱い体質","顔が赤くなる"]},
+    {q:"一気飲みが危険とされる理由を答えよ。", d:"★★☆", a:["急激に血中アルコール濃度が上昇し、急性アルコール中毒になる危険があるから","急性アルコール中毒になる危険があるから","血中アルコール濃度が急激に上がるから"]},
+    {q:"急性アルコール中毒になると、重症の場合どのような状態になるか。", d:"★★★", a:["意識障害・呼吸停止・死に至ることがある","意識障害","呼吸停止","死に至ることがある"]},
+    {q:"多量飲酒を続けると肝臓はどのような状態になるか。", d:"★★☆", a:["脂肪肝になる","脂肪肝"]},
+    {q:"脂肪肝がさらに進行するとどのような病気につながるか。", d:"★★★", a:["肝硬変・肝がん","肝硬変","肝がん"]},
+    {q:"アルコール依存症とはどのような状態か。", d:"★★★", a:["飲酒を自分でコントロールできなくなり、やめられなくなる状態","飲酒をコントロールできなくなる","やめられなくなる"]},
+    {q:"アルコール依存症では、飲酒をやめるとどのような症状が現れるか。", d:"★★☆", a:["手の震え・発汗などの離脱症状","手の震え","発汗","離脱症状"]},
+    {q:"日本人のALDH2の働きが弱い人の割合は約何％とされているか。", d:"★★★", a:["約44%","44%前後","44%","44"]},
+    {q:"飲酒はなぜ本人だけの問題ではないと言えるか。", d:"★★★", a:["周囲に迷惑をかけたり事故や暴力など社会問題につながるから","事故や暴力など社会問題につながるから","周囲に迷惑をかけるから"]},
+  ],
+
+  "11 薬物乱用と健康": [
+    {q:"薬物乱用とはどのような行為を指すか？", d:"★★☆", a:["医学的・医療目的以外で薬物を不正に使用すること","医療目的以外で薬物を不正に使用すること"]},
+    {q:"薬物使用によって大量に放出される神経伝達物質は何か？", d:"★★☆", a:["ドーパミン"]},
+    {q:"依存の種類は大きく分けて精神依存と何か。", d:"★★☆", a:["身体的依存"]},
+    {q:"精神依存とはどのような状態か。", d:"★★☆", a:["薬物を使いたいという強い欲求が自分で抑えられなくなる状態"]},
+    {q:"身体依存とはどのような状態か。", d:"★★★", a:["薬物が体内にないと離脱症状が出る状態"]},
+    {q:"薬物をやめたときに現れる症状を何というか。", d:"★☆☆", a:["離脱症状"]},
+    {q:"一度やめても再び使用してしまう現象を何というか。", d:"★★☆", a:["再使用","再乱用","再発"]},
+    {q:"フラッシュバックとは何か。", d:"★★★", a:["使用をやめた後も、突然過去の精神障害症状が再現する現象"]},
+    {q:"覚醒剤はどのような種類の薬物か。", d:"★☆☆", a:["興奮作用を引き起こす薬物","中枢神経刺激薬"]},
+    {q:"覚醒剤の使用によって起こる精神症状を1つ答えよ。", d:"★★☆", a:["幻覚","妄想"]},
+    {q:"危険ドラッグはどのように販売されていることが多いか。", d:"★★☆", a:["合法ドラッグ・お香・ハーブなどと偽って販売される","合法ドラッグとして販売される"]},
+    {q:"危険ドラッグの成分にはどのような特徴があるか。", d:"★★★", a:["合成された化学物質が含まれている"]},
+    {q:"危険ドラッグの使用によって起こる身体症状を2つ答えよ。", d:"★★☆", a:["意識障害","けいれん","呼吸困難","死亡"]},
+    {q:"「スピード」や「アイス」と呼ばれる薬物は何か。", d:"★★☆", a:["覚醒剤"]},
+    {q:"薬物乱用は健康面だけでなく何に影響を与えると書かれているか。", d:"★★☆", a:["経済的問題・社会問題","経済的問題","社会問題"]},
+    {q:"薬物を入手するために起こりやすい問題を1つ答えよ。", d:"★☆☆", a:["借金","犯罪"]},
+    {q:"薬物乱用が家族に与える影響を簡潔に答えよ。", d:"★★☆", a:["家族関係の悪化","家庭崩壊"]},
+    {q:"薬物はなぜやめることが難しいのか、脳の働きの面から答えよ。", d:"★★☆", a:["報酬系が刺激され強い快感を覚え、ドーパミンが大量に放出されるため"]},
+    {q:"薬物乱用は自分だけの問題ではないのはなぜか。", d:"★★★", a:["家族や社会に悪影響を与え、犯罪や経済問題につながるから"]},
+  ],
+
+  "17 性感染症・エイズとその予防": [
+    {q:"性行為などの性的接触によって感染する病気を何というか。", d:"★☆☆", a:["性感染症"]},
+    {q:"エイズの原因となるウイルスは何か。", d:"★☆☆", a:["HIV","ヒト免疫不全ウイルス"]},
+    {q:"HIVは体のどの働きを低下させるか。", d:"★★☆", a:["免疫","免疫力"]},
+    {q:"HIVに感染しているが、まだ発症していない人を何というか。", d:"★★☆", a:["HIV感染者"]},
+    {q:"免疫が破壊され、さまざまな病気を発症した状態を何というか。", d:"★★☆", a:["エイズ","AIDS"]},
+    {q:"CDCとは何か。", d:"★★★", a:["アメリカ疾病予防管理センター","アメリカ合衆国保健福祉省疾病管理予防センター"]},
+    {q:"HIVが主に攻撃する免疫細胞は何か。", d:"★★☆", a:["ヘルパーT細胞"]},
+    {q:"エイズを発症するとかかりやすくなる病気を1つ答えよ。", d:"★★★", a:["カポジ肉腫","サイトメガロウイルス感染症"]},
+    {q:"HIV感染から発症までにはどのような特徴があるか。", d:"★★☆", a:["数年間自覚症状がない期間がある"]},
+    {q:"現在、エイズにはワクチンが存在するか。", d:"★☆☆", a:["ない","存在しない"]},
+    {q:"HIV治療の基本となる治療法を何というか。", d:"★★★", a:["多剤併用療法","カクテル療法"]},
+    {q:"現在のHIV治療では、1日に何回・何錠程度の服薬が可能になっているか。", d:"★★☆", a:["1日1回1錠"]},
+    {q:"HIVの予防で最も重要とされることは何か。", d:"★☆☆", a:["コンドームを正しく使用すること","コンドームの適切な使用"]},
+    {q:"HIVは体内に入るとき、どこから侵入するか。", d:"★★☆", a:["粘膜"]},
+    {q:"HIV抗体検査はどこで受けられるか。", d:"★★☆", a:["保健所"]},
+    {q:"性感染症の予防として避けるべき行動を1つ答えよ。", d:"★★☆", a:["不特定多数との性行為","無防備な性行為"]},
+    {q:"血液接触で気をつけるべき場面を1つ答えよ。", d:"★★☆", a:["出血時の処置","人工呼吸"]},
+    {q:"性感染症にかかった疑いがある場合、男性はどの診療科を受診するか。", d:"★★☆", a:["泌尿器科"]},
+    {q:"性感染症にかかった疑いがある場合、女性はどの診療科を受診するか。", d:"★★☆", a:["婦人科","産婦人科"]},
+    {q:"クラミジア感染症の特徴を1つ答えよ。", d:"★★☆", a:["自覚症状がないことが多い","不妊の原因になる"]},
   ]
 };
 
@@ -392,8 +464,8 @@ const SUBJECT_DEFAULTS = {
    2) アプリ本体
    ========================= */
 const LS_KEY = "koukyou_quiz_v1";
-// 問題データをHTML側で更新しても、localStorageに古いdataが残っていると反映されないため
-// 版（バージョン）を持たせて不一致ならDEFAULT_DATAを採用する
+
+// 問題データをHTML側で更新しても、localStorageに古いdataが残っていると反映されないため、版（バージョン）を持たせて不一致ならDEFAULT_DATAを採用する
 const DATA_VERSION = 4;
 
 const state = {
@@ -447,7 +519,8 @@ function splitChoiceRun(line){
 }
 
 function formatQuestionHTML(rawQ){
-  // データ中の "\\n" を実際の改行に変換（ここが壊れていると SyntaxError になるので厳密に）
+  // データ中の "\\n" を改行として扱う
+  // rawQ の中身は「\\n（2文字）」なので、まずそれを「\n（改行）」に変換する
   const q = (rawQ ?? "").toString()
     .replace(/\\r\\n/g, "\\n")
     .replace(/\\r/g, "\\n")
@@ -562,7 +635,7 @@ function updateNavButtons(){
   if(btnReview){
     if(state.mode === "input" && atEnd && total > 0){
       btnReview.style.display = "inline-block";
-    }else if(state.mode === "input"){ 
+    }else if(state.mode === "input"){
       btnReview.style.display = "none";
     }
   }
@@ -795,7 +868,17 @@ function load(){
 
   const hasCurrent = saved && saved.dataVersion === DATA_VERSION;
 
-  state.dataBySubject = hasCurrent && saved.dataBySubject ? { ...baseDataBySubject, ...saved.dataBySubject } : baseDataBySubject;
+  // saved側に古いデータが残っていると、新しく追加した章（例：保健10章）が消えることがある。
+  // そこで「章キー単位」で base と saved をマージし、
+  // saved の編集内容は尊重しつつ、base にしかない新章も必ず取り込む。
+  const mergedDataBySubject = {};
+  Object.keys(baseDataBySubject).forEach(subj=>{
+    const base = baseDataBySubject[subj] || {};
+    const savedSubj = (hasCurrent && saved.dataBySubject && saved.dataBySubject[subj]) ? saved.dataBySubject[subj] : null;
+    mergedDataBySubject[subj] = savedSubj ? ({ ...base, ...savedSubj }) : base;
+  });
+
+  state.dataBySubject = mergedDataBySubject;
   state.statsBySubject = hasCurrent && saved.statsBySubject ? saved.statsBySubject : {};
   state.mistakesBySubject = hasCurrent && saved.mistakesBySubject ? saved.mistakesBySubject : {};
   state.sectionBySubject = hasCurrent && saved.sectionBySubject ? saved.sectionBySubject : {};
@@ -827,6 +910,7 @@ function load(){
 }
 
 function save(){
+
   state.dataBySubject[state.subject] = state.data;
   state.statsBySubject[state.subject] = state.stats;
   state.mistakesBySubject[state.subject] = Array.from(state.mistakes);
@@ -886,12 +970,12 @@ function resetStats(){
   hideAnswer();
   el("hintLine").textContent = "";
 
-  // 出題順を作り直して最初の問題へ（見た目でもリセット感を出す）
+  // 出題順を作り直して最初の問題へ
   makeOrder(false);
   state.idx = -1;
   nextQuestion();
 
-  // マップにも即時反映してから保存（科目切替直後でもズレないように）
+  // 科目単位で保存
   state.statsBySubject[state.subject] = state.stats;
   state.mistakesBySubject[state.subject] = [];
 
@@ -986,12 +1070,15 @@ function maybeRunTests(){
 
   assert(!!SUBJECT_DEFAULTS["公共"], "has 公共");
   assert(!!SUBJECT_DEFAULTS["保健"], "has 保健");
-  assert(HEALTH_DATA["9 喫煙と健康"][7].q.includes("\\n"), "health multiline uses \\n");
+
+  assert(Array.isArray(HEALTH_DATA["9 喫煙と健康"]) && HEALTH_DATA["9 喫煙と健康"].length > 0, "health chapter 9 exists");
+  assert(Array.isArray(HEALTH_DATA["10 飲酒と健康"]) && HEALTH_DATA["10 飲酒と健康"].length > 0, "health chapter 10 exists");
+
+  assert(HEALTH_DATA["9 喫煙と健康"][7].q.includes("\\n"), "health multiline uses \\\\n");
 
   // フォーマッタが選択肢を choiceLine にする
   const html = formatQuestionHTML(HEALTH_DATA["9 喫煙と健康"][7].q);
   assert(html.includes("choiceLine"), "formatter adds choiceLine");
-  // フォーマッタが \\n を改行扱いにできる
   assert(html.includes("ア："), "formatter keeps choices");
 
   // 全章で order が作れる
