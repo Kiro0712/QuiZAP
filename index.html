@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>公共 問題クイズ</title>
+  <title>QuiZAP</title>
   <style>
     :root{--bg:#0b1020;--card:#121a33;--muted:#a9b3d6;--text:#eef2ff;--accent:#7aa2ff;--good:#34d399;--bad:#fb7185;--warn:#fbbf24;}
     body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,"Hiragino Kaku Gothic ProN","Noto Sans JP","Yu Gothic",sans-serif;background:linear-gradient(180deg,#0b1020,#070a14);color:var(--text);}
@@ -13,6 +13,9 @@
     .grid{display:grid;gap:12px}
     @media(min-width:900px){.grid{grid-template-columns:360px 1fr}}
     .card{background:rgba(18,26,51,.9);border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:14px;box-shadow:0 10px 30px rgba(0,0,0,.25)}
+    /* 右側カードを縦レイアウトにしてボタンを下固定 */
+    .card.flexcol{display:flex;flex-direction:column;}
+    .bottomBar{margin-top:auto;padding-top:12px;background:linear-gradient(to top, rgba(18,26,51,1), rgba(18,26,51,.95) 60%, rgba(18,26,51,0));position:sticky;bottom:0;}
     label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px}
     select,input,button,textarea{font:inherit}
     select,input,textarea{width:100%;padding:10px 12px;border-radius:12px;border:1px solid rgba(255,255,255,.12);background:rgba(7,10,20,.8);color:var(--text);outline:none}
@@ -38,67 +41,50 @@
     .item:hover{background:rgba(255,255,255,.06)}
     .item b{display:block}
     .kbd{font-size:11px;border:1px solid rgba(255,255,255,.2);padding:2px 6px;border-radius:6px;background:rgba(255,255,255,.06);color:var(--muted)}
+    .statNum{font-size:1.5em;font-weight:600;}
   </style>
 </head>
 <body>
 <header>
   <div class="wrap row" style="align-items:center;justify-content:space-between">
-    <h1>公共 問題クイズ（暗記カード / 入力クイズ / 復習）</h1>
-    <div class="pill"><span class="kbd">N</span>次へ <span class="kbd">A</span>答え表示 <span class="kbd">R</span>シャッフル</div>
+    <h1>QuiZAP</h1>
+    
   </div>
 </header>
 
 <div class="wrap grid">
   <section class="card">
-    <div class="row">
-      <div>
-        <label>章を選ぶ</label>
-        <select id="sectionSel"></select>
-      </div>
-      <div>
-        <label>出題モード</label>
-        <select id="modeSel">
-          <option value="flash">暗記カード（答え表示中心）</option>
-          <option value="input">入力クイズ（正誤判定）</option>
-        </select>
-      </div>
+    <div>
+      <label>出題科目</label>
+      <select id="subjectSel">
+        <option value="公共">公共</option>
+        <option value="保健" disabled>保健（Coming Soon）</option>
+      </select>
     </div>
 
-    <div class="row" style="margin-top:10px">
-      <button class="primary" id="btnNext">次の問題</button>
-      <button id="btnShow">答えを表示</button>
-      <button id="btnShuffle" class="warn">シャッフル</button>
+    <div style="margin-top:10px">
+      <label>出題モード</label>
+      <select id="modeSel">
+        <option value="flash">暗記カード（答え表示中心）</option>
+        <option value="input">入力クイズ（正誤判定）</option>
+      </select>
     </div>
 
+    <div style="margin-top:10px">
+      <label>出題する章</label>
+      <select id="sectionSel"></select>
+    </div>
     <div class="sep"></div>
-
-    <div class="row">
-      <div class="pill">出題数: <b id="statSeen">0</b></div>
-      <div class="pill">正解: <b id="statOk">0</b></div>
-      <div class="pill">不正解: <b id="statNg">0</b></div>
-      <div class="pill">正解率: <b id="statRate">0%</b></div>
-      <div class="pill">連続正解: <b id="statStreak">0</b></div>
-    </div>
-
-    <div class="sep"></div>
-
-    <div class="row">
-      <button id="btnReviewMistakes" class="bad">間違いだけ復習</button>
-      <button id="btnResetStats">進捗リセット</button>
-    </div>
-
-    <div class="sep"></div>
-
     <label>検索</label>
-<div class="row">
-  <select id="searchTarget">
-    <option value="q">問題（問題文）</option>
-    <option value="a">答え</option>
-    <option value="both">問題＋答え</option>
-  </select>
-  <input id="searchBox" placeholder="例：プラザ / 公害 / NATO など" />
-</div>
-<div class="list" id="searchList" style="margin-top:10px"></div>
+    <div class="row">
+      <select id="searchTarget">
+        <option value="q">問題（問題文）</option>
+        <option value="a">答え</option>
+        <option value="both">問題＋答え</option>
+      </select>
+      <input id="searchBox" placeholder="例：プラザ / 公害 / NATO など" />
+    </div>
+    <div class="list" id="searchList" style="margin-top:10px"></div>
 
     <div class="sep"></div>
 
@@ -112,15 +98,27 @@
       </div>
       <p class="small muted">※入力を間違えて戻せなくなった際は、ページ再読み込みで元に戻せます（保存済みの進捗は残ります）。</p>
     </details>
+
+    <div class="row" style="margin-top:10px">
+      <button id="btnResetStats">進捗リセット</button>
+    </div>
   </section>
 
-  <section class="card">
+  <section class="card flexcol">
     <div class="pill" id="metaPill">—</div>
+
+    <!-- 統計を問題の上へ移動 -->
+    <div class="sep" id="sepStatsTop"></div>
+    <div class="row" id="statsRow">
+      <div class="pill"><span id="statSummary"><span class="statNum">0</span>問目、<span class="statNum">0</span>問正解！（<span class="statNum">0</span>％）</span></div>
+    </div>
+    <div class="sep" id="sepStatsBottom"></div>
+
     <div class="q" id="qText">章を選んで「次の問題」</div>
 
     <div id="inputArea" style="display:none">
       <label>あなたの答え（例：プラザ合意）</label>
-      <input id="ansInput" autocomplete="off" placeholder="ここに入力してEnter" />
+      <input id="ansInput" autocomplete="off" placeholder="ここに入力" />
       <div class="row" style="margin-top:10px">
         <button id="btnJudge" class="primary">判定</button>
         <button id="btnGiveUp" class="bad">わからない</button>
@@ -128,8 +126,25 @@
       <p class="small muted">同義語は「別解」にあります。</p>
     </div>
 
-    <div style="margin-top:12px;display:none" id="answerBox" class="a"></div>
+    <!-- 暗記カード用：問題の下に表示する答えボタン -->
+    <div id="flashShowWrap" style="margin-top:10px">
+      <button id="btnShow">▼ 答えを表示</button>
+    </div>
+
+    <!-- 答えはボタンの下に表示 -->
+    <div style="margin-top:10px;display:none" id="answerBox" class="a"></div>
+
     <div style="margin-top:10px" class="small muted" id="hintLine"></div>
+
+    <!-- 下固定ボタンエリア -->
+    <div class="bottomBar">
+      <div class="row" style="margin-top:10px">
+      <button id="btnPrev">← 前の問題</button>
+      <button id="btnReviewMistakes" class="bad">復習する →</button>
+      <button class="primary" id="btnNext">次の問題 →</button>
+      
+      </div>
+    </div>
   </section>
 </div>
 
@@ -145,7 +160,7 @@ const DEFAULT_DATA = {
     {q:"石炭や鉄鋼などの基幹産業を優先的に発展させた政策を何というか。", a:["傾斜生産方式"]},
     {q:"1956年の経済白書に書かれた有名な言葉は何か。", a:["もはや戦後ではない"]},
     {q:"1950年代後半から続いた急速な経済成長を何というか。", a:["高度経済成長"]},
-    {q:"高度経済成長では、年間なん%の成長をしたか。", a:["約10%","10%前後"]},
+    {q:"高度経済成長では、年間何%の成長をしたか。", a:["約10%","10%前後"]},
     {q:"1973年に発生し、日本経済に大打撃を与えた出来事を何というか。", a:["オイルショック","第一次オイルショック"]},
     {q:"1980年代に実現した年平均4～5％の成長を何というか。", a:["安定成長"]},
     {q:"1980年代、日米間で自動車や半導体をめぐって起きた対立を何というか。", a:["日米貿易摩擦","貿易摩擦"]},
@@ -214,16 +229,16 @@ const DEFAULT_DATA = {
     {q:"労働組合を作り団体交渉を可能にする法律は？", a:["労働組合法"]},
     {q:"紛争が自主的に解決できない場合の調整方法を定める法律は？", a:["労働関係調整法"]},
     {q:"組合加入などを理由に解雇するなど使用者が禁止される行為は？", a:["不当労働行為"]},
-    {q:"労働委員会の調整：自主的解決を促す調整は？", a:["あっせん","斡旋"]},
-    {q:"労働委員会の調整：調停案を提出する調整は？", a:["調停"]},
-    {q:"労働委員会の調整：拘束力のある裁定は？", a:["仲裁"]},
+    {q:"労働委員会の調整：自主的解決を促す調整は？", a:["斡旋","あっせん"]},
+    {q:"労働委員会の調整：調停案を提出する調整は？", a:["調停","ちょうてい"]},
+    {q:"労働委員会の調整：拘束力のある裁定は？", a:["仲裁","ちゅうさい"]},
     {q:"労働条件のすべてで男女差別を禁止（1986年施行）の法律は？", a:["男女雇用機会均等法"]},
     {q:"1997年改正で防止を義務付けられた行為は？", a:["セクシュアルハラスメント","セクハラ"]},
     {q:"育児休業法は1995年に何へ改正？", a:["育児・介護休業法"]},
     {q:"定年まで同じ会社に勤める伝統的雇用慣行は？", a:["終身雇用"]},
     {q:"勤続年数に応じて賃金が決まる賃金制度は？", a:["年功序列賃金","年功賃金"]},
     {q:"労働組合が企業ごとに組織されることを何というか。", a:["企業別組合"]},
-    {q:"バブル崩壊後、日本の雇用はどう変化した？", a:["非正規雇用が増加","成果主義の導入","雇用の流動化"]},
+    {q:"バブル崩壊後、日本の雇用はどう変化した？（ヒント：○○○○○が増加）", a:["非正規雇用が増加","成果主義の導入","雇用の流動化"]},
     {q:"働いても生活が苦しい人々を何というか。", a:["ワーキングプア"]},
     {q:"2003年改正で製造業派遣を容認した法律は？", a:["労働者派遣法"]},
     {q:"過労やストレスが死因となる問題は？", a:["過労死"]},
@@ -331,6 +346,10 @@ const DEFAULT_DATA = {
    2) アプリ本体
    ========================= */
 const LS_KEY = "koukyou_quiz_v1";
+// 問題データをHTML側で更新しても、localStorageに古いdataが残っていると反映されないため
+// 版（バージョン）を持たせて不一致ならDEFAULT_DATAを採用する
+const DATA_VERSION = 2;
+
 const state = {
   data: null,
   section: null,
@@ -358,71 +377,136 @@ function normalize(s){
 
 function qid(section, i){ return section + "::" + i; }
 
-function load(){
-  const saved = JSON.parse(localStorage.getItem(LS_KEY) || "null");
-  state.data = (saved && saved.data) ? saved.data : DEFAULT_DATA;
-  state.section = (saved && saved.section) ? saved.section : Object.keys(state.data)[0];
-  state.mode = (saved && saved.mode) ? saved.mode : "flash";
-  state.stats = (saved && saved.stats) ? saved.stats : {seen:0, ok:0, ng:0, streak:0};
-  state.mistakes = new Set((saved && saved.mistakes) ? saved.mistakes : []);
-  state.reviewMode = false;
-  buildSectionOptions();
-  el("modeSel").value = state.mode;
-  el("dataArea").value = JSON.stringify(state.data, null, 2);
-  makeOrder();
-  renderStats();
-  renderSearch("");
-  nextQuestion();
-}
-
-function save(){
-  localStorage.setItem(LS_KEY, JSON.stringify({
-    data: state.data,
-    section: state.section,
-    mode: state.mode,
-    stats: state.stats,
-    mistakes: Array.from(state.mistakes)
-  }));
-}
-
+// ★ 修正：章セレクトを組み立てる関数（未定義エラーの原因）
 function buildSectionOptions(){
   const sel = el("sectionSel");
+  if(!sel) return;
   sel.innerHTML = "";
-  Object.keys(state.data).forEach(name=>{
+
+  // ★ 全章オプションを先頭に追加
+  const allOpt = document.createElement("option");
+  allOpt.value = "__ALL__";
+  allOpt.textContent = "全章";
+  sel.appendChild(allOpt);
+
+  const keys = Object.keys(state.data || {});
+  keys.forEach(name=>{
     const opt = document.createElement("option");
-    opt.value = name; opt.textContent = name;
+    opt.value = name;
+    opt.textContent = name;
     sel.appendChild(opt);
   });
-  sel.value = state.section;
+
+  if(state.section === "__ALL__"){
+    sel.value = "__ALL__";
+  }else if(keys.includes(state.section)){
+    sel.value = state.section;
+  }else{
+    state.section = "__ALL__";
+    sel.value = "__ALL__";
+  }
 }
 
 function makeOrder(fromMistakes=false){
-  const items = state.data[state.section] || [];
-  let indices = items.map((_,i)=>i);
+  let pool = [];
+
+  if(state.section === "__ALL__"){
+    Object.keys(state.data).forEach(sec=>{
+      (state.data[sec] || []).forEach((_,i)=>{
+        pool.push({section:sec, index:i});
+      });
+    });
+  }else{
+    (state.data[state.section] || []).forEach((_,i)=>{
+      pool.push({section:state.section, index:i});
+    });
+  }
+
   if(fromMistakes){
-    indices = indices.filter(i=> state.mistakes.has(qid(state.section,i)));
+    pool = pool.filter(p=> state.mistakes.has(qid(p.section,p.index)));
   }
-  // shuffle
-  for(let i=indices.length-1;i>0;i--){
+
+  for(let i=pool.length-1;i>0;i--){
     const j = Math.floor(Math.random()*(i+1));
-    [indices[i],indices[j]]=[indices[j],indices[i]];
+    [pool[i],pool[j]]=[pool[j],pool[i]];
   }
-  state.order = indices;
+
+  state.order = pool;
   state.idx = -1;
+  updateNavButtons();
 }
 
 function currentItem(){
-  const items = state.data[state.section] || [];
-  const i = state.order[state.idx];
-  if(i==null) return null;
-  return { ...items[i], _i:i, _id: qid(state.section,i) };
+  const entry = state.order[state.idx];
+  if(!entry) return null;
+
+  const items = state.data[entry.section] || [];
+  const it = items[entry.index];
+  if(!it) return null;
+
+  return { ...it, _i:entry.index, _section:entry.section, _id: qid(entry.section,entry.index) };
+}
+
+function updateNavButtons(){
+  const btnPrev = el("btnPrev");
+  const btnNext = el("btnNext");
+  const btnReview = el("btnReviewMistakes");
+
+  const total = state.order.length;
+  const atStart = state.idx <= 0;
+  const atEnd = total === 0 ? true : state.idx >= total - 1;
+
+  if(btnPrev) btnPrev.style.display = atStart ? "none" : "inline-block";
+  if(btnNext) btnNext.style.display = atEnd ? "none" : "inline-block";
+
+  // ★ 入力クイズ時のみ、最後の問題でだけ「復習」を表示
+  if(btnReview){
+    if(state.mode === "input" && atEnd && total > 0){
+      btnReview.style.display = "inline-block";
+    }else if(state.mode === "input"){
+      btnReview.style.display = "none";
+    }
+    // flashモード時の表示制御はsetModeUI側に任せる
+  }
 }
 
 function setModeUI(){
   const isInput = state.mode === "input";
+
+  // 入力モード以外（暗記カード）のときは統計を非表示
+  const statsRow = el("statsRow");
+  const sepTop = el("sepStatsTop");
+  const sepBottom = el("sepStatsBottom");
+
+  if(statsRow){
+    const show = isInput;
+    statsRow.style.display = show ? "flex" : "none";
+    if(sepTop) sepTop.style.display = show ? "block" : "none";
+    if(sepBottom) sepBottom.style.display = show ? "block" : "none";
+  }
+
+  // ★ モードごとのボタン表示制御
+  const btnShow = el("btnShow");
+  const btnReview = el("btnReviewMistakes");
+  const btnReset = el("btnResetStats");
+
+  if(state.mode === "flash"){
+    // 暗記カード時
+    if(btnShow) btnShow.style.display = "inline-block";
+    if(btnReview) btnReview.style.display = "none";
+    if(btnReset) btnReset.style.display = "none";
+  }else{
+    // 入力クイズ時
+    if(btnShow) btnShow.style.display = "none"; // ★ 追加：入力時は答えを表示を非表示
+    if(btnReset) btnReset.style.display = "inline-block";
+    // 復習ボタンは updateNavButtons で制御
+  }
+
   el("inputArea").style.display = isInput ? "block" : "none";
   el("ansInput").value = "";
-  el("hintLine").textContent = isInput ? "Enterでも判定します / わからなければ「わからない」をクリック・タップ" : "「答えを表示」で暗記カードとして使えます。";
+  el("hintLine").textContent = isInput
+    ? "Enterでも判定します / わからなければ「わからない」をクリック・タップ"
+    : "";
 }
 
 function showAnswer(){
@@ -442,16 +526,26 @@ function hideAnswer(){
 }
 
 function nextQuestion(){
-  const items = state.data[state.section] || [];
+  const items = state.section === "__ALL__" ? state.order.map(e=>state.data[e.section][e.index]) : (state.data[state.section] || []);
   if(items.length === 0){
     el("qText").textContent = "この章に問題がありません。";
+    const label0 = state.section === "__ALL__" ? "全章" : state.section;
+    el("metaPill").textContent = `前に選択中：${label0} - 0 / 0${state.reviewMode ? "（間違い復習）" : ""}`;
+    hideAnswer();
+    setModeUI();
+    // ナビボタンは両方隠す
+    state.idx = 0;
+    updateNavButtons();
     return;
   }
-  // if order exhausted, reshuffle
-  if(state.idx >= state.order.length - 1){
-    makeOrder(state.reviewMode);
+
+  // ★ 末尾では自動でシャッフルして最初に戻らない（末尾で「次の問題」を非表示）
+  if(state.idx < state.order.length - 1){
+    state.idx += 1;
+  }else{
+    state.idx = state.order.length - 1;
   }
-  state.idx += 1;
+
   state.current = currentItem();
   state.revealed = false;
   hideAnswer();
@@ -459,9 +553,33 @@ function nextQuestion(){
 
   const total = state.order.length;
   const pos = state.idx + 1;
-  el("metaPill").textContent = `${state.section} / ${pos} / ${total}${state.reviewMode ? "（間違い復習）" : ""}`;
+  const label = state.section === "__ALL__" ? "全章" : state.section;
+  el("metaPill").textContent = `選択中：${label} - ${pos} / ${total}${state.reviewMode ? "（間違い復習）" : ""}`;
   el("qText").textContent = state.current.q;
   el("ansInput").focus();
+
+  updateNavButtons();
+}
+
+function prevQuestion(){
+  if(state.order.length === 0) return;
+  if(state.idx <= 0){
+    state.idx = 0;
+  }else{
+    state.idx -= 1;
+  }
+  state.current = currentItem();
+  state.revealed = false;
+  hideAnswer();
+  setModeUI();
+
+  const total = state.order.length;
+  const pos = state.idx + 1;
+  const label = state.section === "__ALL__" ? "全章" : state.section;
+  el("metaPill").textContent = `選択中：${label} - ${pos} / ${total}${state.reviewMode ? "（間違い復習）" : ""}`;
+  el("qText").textContent = state.current.q;
+
+  updateNavButtons();
 }
 
 function judge(){
@@ -500,13 +618,13 @@ function giveUp(){
 }
 
 function renderStats(){
-  const {seen, ok, ng, streak} = state.stats;
+  const {seen, ok} = state.stats;
   const rate = seen ? Math.round(ok/seen*100) : 0;
-  el("statSeen").textContent = seen;
-  el("statOk").textContent = ok;
-  el("statNg").textContent = ng;
-  el("statRate").textContent = rate + "%";
-  el("statStreak").textContent = streak;
+
+  const summaryEl = el("statSummary");
+  if(summaryEl){
+    summaryEl.innerHTML = `<span class="statNum">${seen}</span>問目、<span class="statNum">${ok}</span>問正解！（<span class="statNum">${rate}</span>％）`;
+  }
 }
 
 function renderSearch(keyword){
@@ -520,7 +638,7 @@ function renderSearch(keyword){
     return;
   }
 
-  const items = state.data[state.section] || [];
+  const items = state.section === "__ALL__" ? state.order.map(e=>state.data[e.section][e.index]) : (state.data[state.section] || []);
   const hit = [];
 
   items.forEach((it,i)=>{
@@ -544,7 +662,6 @@ function renderSearch(keyword){
     div.className="item";
     const id = qid(state.section,i);
 
-    // どこにヒットしたか表示
     const qHit = it.q.includes(kw);
     const aHit = (it.a || []).some(x => (x || "").includes(kw));
     const where =
@@ -564,11 +681,53 @@ function renderSearch(keyword){
   });
 }
 
+function load(){
+  const saved = JSON.parse(localStorage.getItem(LS_KEY) || "null");
+
+  const savedHasCurrentData = saved && saved.data && saved.dataVersion === DATA_VERSION;
+  state.data = savedHasCurrentData ? saved.data : DEFAULT_DATA;
+
+  state.section = (saved && saved.section && state.data[saved.section]) ? saved.section : Object.keys(state.data)[0];
+  state.mode = (saved && saved.mode) ? saved.mode : "flash";
+  state.stats = (saved && saved.stats) ? saved.stats : {seen:0, ok:0, ng:0, streak:0};
+
+  // データ版が違う場合は、問題IDがズレる可能性があるのでmistakesはクリア
+  state.mistakes = new Set((savedHasCurrentData && saved && saved.mistakes) ? saved.mistakes : []);
+
+  state.reviewMode = false;
+  buildSectionOptions();
+  el("modeSel").value = state.mode;
+  el("dataArea").value = JSON.stringify(state.data, null, 2);
+  makeOrder();
+  renderStats();
+  renderSearch("");
+  nextQuestion();
+
+  if(saved && !savedHasCurrentData){
+    save();
+  }
+
+  updateNavButtons();
+
+  // optional tests
+  maybeRunTests();
+}
+
+function save(){
+  localStorage.setItem(LS_KEY, JSON.stringify({
+    dataVersion: DATA_VERSION,
+    data: state.data,
+    section: state.section,
+    mode: state.mode,
+    stats: state.stats,
+    mistakes: Array.from(state.mistakes)
+  }));
+}
+
 function applyData(){
   try{
     const parsed = JSON.parse(el("dataArea").value);
     state.data = parsed;
-    // reset section if missing
     const keys = Object.keys(state.data);
     if(!keys.includes(state.section)) state.section = keys[0] || "（空）";
     buildSectionOptions();
@@ -585,7 +744,6 @@ function applyData(){
 function exportData(){
   const txt = JSON.stringify(state.data, null, 2);
   navigator.clipboard?.writeText(txt).then(()=>alert("コピーしました！")).catch(()=>{
-    // fallback
     el("dataArea").focus();
     el("dataArea").select();
     document.execCommand("copy");
@@ -605,7 +763,7 @@ function startReviewMistakes(){
   state.reviewMode = true;
   makeOrder(true);
   if(state.order.length===0){
-    alert("この章の『間違い』がありません！");
+    alert("この章には間違えている問題がありません。");
     state.reviewMode = false;
     makeOrder(false);
     return;
@@ -613,10 +771,6 @@ function startReviewMistakes(){
   nextQuestion();
 }
 
-function shuffleNow(){
-  makeOrder(state.reviewMode);
-  nextQuestion();
-}
 
 function wire(){
   el("sectionSel").addEventListener("change", ()=>{
@@ -625,19 +779,23 @@ function wire(){
     makeOrder(false);
     hideAnswer();
     renderSearch(el("searchBox").value);
-    el("searchTarget").addEventListener("change", ()=>renderSearch(el("searchBox").value));
     save();
     nextQuestion();
   });
+
+  // ※changeリスナーを章変更のたびに追加すると多重登録になるので、ここで1回だけ
+  el("searchTarget").addEventListener("change", ()=>renderSearch(el("searchBox").value));
+
   el("modeSel").addEventListener("change", ()=>{
     state.mode = el("modeSel").value;
     setModeUI();
     save();
   });
+
   el("btnNext").onclick = ()=>nextQuestion();
+  el("btnPrev").onclick = ()=>prevQuestion();
   el("btnShow").onclick = ()=> state.revealed ? hideAnswer() : showAnswer();
-  el("btnShuffle").onclick = ()=>shuffleNow();
-  el("btnJudge").onclick = ()=>judge();
+    el("btnJudge").onclick = ()=>judge();
   el("btnGiveUp").onclick = ()=>giveUp();
   el("btnResetStats").onclick = ()=>resetStats();
   el("btnReviewMistakes").onclick = ()=>startReviewMistakes();
@@ -653,8 +811,60 @@ function wire(){
     if(e.target && (e.target.tagName==="INPUT" || e.target.tagName==="TEXTAREA")) return;
     if(e.key==="n" || e.key==="N"){ nextQuestion(); }
     if(e.key==="a" || e.key==="A"){ state.revealed ? hideAnswer() : showAnswer(); }
-    if(e.key==="r" || e.key==="R"){ shuffleNow(); }
+    
   });
+}
+
+// -------------------------
+// テスト（?test=1 で実行）
+// -------------------------
+function assert(cond, msg){
+  if(!cond) throw new Error("TEST FAILED: " + msg);
+}
+
+function maybeRunTests(){
+  if(!location.search.includes("test=1")) return;
+  console.log("[tests] start");
+
+  // buildSectionOptions
+  assert(!!el("subjectSel"), "subjectSel exists");
+
+  // buildSectionOptions
+  assert(!!el("sectionSel"), "sectionSel exists");
+  assert(Object.keys(state.data).length > 0, "data has sections");
+  assert(el("sectionSel").options.length === Object.keys(state.data).length + 1, "sectionSel includes 全章 option");
+  assert(el("sectionSel").options[0].value === "__ALL__", "first option is 全章");
+
+  // mode UI test
+  assert(typeof setModeUI === "function", "setModeUI exists");
+
+  // normalize
+  assert(normalize(" プラザ 合意 ") === "プラザ合意", "normalize removes spaces");
+
+  // qid
+  assert(qid("S", 1) === "S::1", "qid format");
+
+  // prevQuestion existence
+  assert(typeof prevQuestion === "function", "prevQuestion exists");
+
+  // nav buttons visibility (初期は最初の問題なので前の問題は非表示)
+  assert(el("btnPrev").style.display === "none", "btnPrev hidden at start");
+
+  // stats summary format
+  const summary = el("statSummary").textContent;
+  assert(summary.includes("問目"), "summary contains 問目");
+  assert(summary.includes("正解"), "summary contains 正解");
+
+  // inputモード初期では復習は非表示（最後でないため）
+  state.mode = "input";
+  setModeUI();
+  updateNavButtons();
+  assert(el("btnReviewMistakes").style.display === "none", "review hidden in input before end");
+
+  // 入力モードでは答えを表示は非表示
+  assert(el("btnShow").style.display === "none", "btnShow hidden in input mode");
+
+  console.log("[tests] OK");
 }
 
 wire();
