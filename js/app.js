@@ -289,21 +289,49 @@ function hideQuestionImage(){
   }
 }
 
+function resolveImageCandidates(rawSrc){
+  const src = (rawSrc || "").toString().trim();
+  if(!src) return [];
+
+  // 絶対URL・data URL・blob URL・ルート絶対パスはそのまま使う
+  if(/^(https?:|data:|blob:|\/)/i.test(src)) return [src];
+
+  // 相対パスは、指定値を優先しつつ data/ 配下もフォールバックで試す
+  const cleaned = src.replace(/^\.?\//, "");
+  const cands = [cleaned];
+  if(!cleaned.startsWith("data/")) cands.push(`data/${cleaned}`);
+
+  return Array.from(new Set(cands));
+}
+
 function renderQuestionImage(item){
   const wrap = el("qImageWrap");
   const img = el("qImage");
   if(!wrap || !img) return;
 
   const src = (item?.i || item?.img || item?.image || "").toString().trim();
-  if(!src){
+  const candidates = resolveImageCandidates(src);
+  if(candidates.length === 0){
     hideQuestionImage();
     return;
   }
 
-  img.onerror = ()=>{ hideQuestionImage(); };
   img.alt = (item?.iAlt || item?.imgAlt || item?.imageAlt || "問題画像").toString();
-  img.src = src;
-  wrap.style.display = "block";
+  wrap.style.display = "none";
+
+  let idx = 0;
+  const tryLoad = ()=>{
+    if(idx >= candidates.length){
+      hideQuestionImage();
+      return;
+    }
+    img.src = candidates[idx];
+    idx += 1;
+  };
+
+  img.onload = ()=>{ wrap.style.display = "block"; };
+  img.onerror = ()=>{ tryLoad(); };
+  tryLoad();
 }
 
 function renderCurrent(){

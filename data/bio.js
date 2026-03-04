@@ -106,17 +106,18 @@ const BIO_DATA = {
     {q:"開発をする際、生態系への影響を事前に評価することを何というか。", d:"★★☆", a:["環境アセスメント","環境影響評価"]},
   ],
   "画像クイズ（バイオームのグラフ）": [
-    {q:"次のグラフの(a)は何か。", i:"images/bio/biome.png", d:"★★☆", a:["熱帯多雨林"]},
-    {q:"次のグラフの(b)は何か。", i:"images/bio/biome.png", d:"★★☆", a:["亜熱帯多雨林"]},
-    {q:"次のグラフの(c)は何か。", i:"images/bio/biome.png", d:"★★☆", a:["雨緑樹林"]},
-    {q:"次のグラフの(d)は何か。", i:"images/bio/biome.png", d:"★★☆", a:["照葉樹林"]},
-    {q:"次のグラフの(e)は何か。", i:"images/bio/biome.png", d:"★★☆", a:["夏緑樹林"]},
-    {q:"次のグラフの(f)は何か。", i:"images/bio/biome.png", d:"★★☆", a:["針葉樹林"]},
-    {q:"次のグラフの(g)は何か。", i:"images/bio/biome.png", d:"★★☆", a:["硬葉樹林"]},
-    {q:"次のグラフの(h)は何か。", i:"images/bio/biome.png", d:"★★☆", a:["サバンナ"]},
-    {q:"次のグラフの(i)は何か。", i:"images/bio/biome.png", d:"★★☆", a:["ステップ"]},
-    {q:"次のグラフの(j)は何か。", i:"images/bio/biome.png", d:"★★☆", a:["ツンドラ"]},
-    {q:"次のグラフの(k)は何か。", i:"images/bio/biome.png", d:"★★☆", a:["砂漠"]},
+    {q:"次のグラフの(a)は何か。", i:"data/images/bio/biome.png", d:"★★☆", a:["熱帯多雨林"]},
+    {q:"次のグラフの(b)は何か。", i:"data/images/bio/biome.png", d:"★★☆", a:["亜熱帯多雨林"]},
+    {q:"次のグラフの(c)は何か。", i:"data/images/bio/biome.png", d:"★★☆", a:["雨緑樹林"]},
+    {q:"次のグラフの(d)は何か。", i:"data/images/bio/biome.png", d:"★★☆", a:["照葉樹林"]},
+    {q:"次のグラフの(e)は何か。", i:"data/images/bio/biome.png", d:"★★☆", a:["夏緑樹林"]},
+    {q:"次のグラフの(f)は何か。", i:"data/images/bio/biome.png", d:"★★☆", a:["針葉樹林"]},
+    {q:"次のグラフの(g)は何か。", i:"data/images/bio/biome.png", d:"★★☆", a:["硬葉樹林"]},
+    {q:"次のグラフの(h)は何か。", i:"data/images/bio/biome.png", d:"★★☆", a:["サバンナ"]},
+    {q:"次のグラフの(i)は何か。", i:"data/images/bio/biome.png", d:"★★☆", a:["ステップ"]},
+    {q:"次のグラフの(j)は何か。", i:"data/images/bio/biome.png", d:"★★☆", a:["ツンドラ"]},
+    {q:"次のグラフの(k)は何か。", i:"data/images/bio/biome.png", d:"★★☆", a:["砂漠"]},
   ]
 };
+
 
