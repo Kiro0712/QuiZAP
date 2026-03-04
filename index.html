@@ -121,27 +121,11 @@
 
     <label>検索</label>
     <div class="row">
-      <select id="searchTarget">
-        <option value="q">問題（問題文）</option>
-        <option value="a">答え</option>
-        <option value="both">問題＋答え</option>
-      </select>
       <input id="searchBox" placeholder="例：プラザ / 公害 / NATO など" />
     </div>
     <div class="list" id="searchList" style="margin-top:10px"></div>
 
     <div class="sep"></div>
-
-    <details>
-      <summary class="muted">データの編集（JSON・管理用）</summary>
-      <p class="small muted">問題・答えに誤りがある場合は、ここで修正できます。※デバイス内に保存されます。※オンライン上では更新されないため、間違いを発見した際は、LINEにてご報告をお願いします。</p>
-      <textarea id="dataArea"></textarea>
-      <div class="row" style="margin-top:10px">
-        <button id="btnApplyData" class="good">反映</button>
-        <button id="btnExportData">JSONをコピー</button>
-      </div>
-      <p class="small muted">※入力を間違えて戻せなくなった際は、ページ再読み込みで元に戻せます（保存済みの進捗は残ります）。</p>
-    </details>
 
     <div class="row" style="margin-top:10px">
       <button id="btnResetStats">進捗リセット</button>
