@@ -176,10 +176,29 @@
   </section>
 </div>
 
-<script src="data/public.js" defer></script>
-<script src="data/health.js" defer></script>
-<script src="data/bio.js" defer></script>
-<script src="js/app.js" defer></script>
+<script>
+  (async function loadScriptsNoCache(){
+    const v = Date.now().toString();
+    const files = [
+      "data/public.js",
+      "data/health.js",
+      "data/bio.js",
+      "js/app.js",
+    ];
+
+    for(const file of files){
+      await new Promise((resolve, reject) => {
+        const s = document.createElement("script");
+        s.src = `${file}?v=${v}`;
+        s.onload = resolve;
+        s.onerror = () => reject(new Error(`Failed to load: ${file}`));
+        document.body.appendChild(s);
+      });
+    }
+  })().catch((err) => {
+    console.error(err);
+  });
+</script>
 </body>
 </html>
 
