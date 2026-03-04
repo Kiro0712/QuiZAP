@@ -3,19 +3,19 @@
 // =========================
 const LOGIC_DATA = {
   "Lesson 18": [
-    {q:"「～する気がする」を表す表現を書け。", d:"★☆☆", a:["feel like ～ing"]},
-    {q:"「～することを提案する」という意味になる動詞を書け。", d:"★☆☆", a:["suggest"]},
-    {q:"「～することを避ける」という意味の動詞を書け。", d:"★☆☆", a:["avoid"]},
-    {q:"「～することを楽しむ」という意味の動詞を書け。", d:"★☆☆", a:["enjoy"]},
-    {q:"「～するのは無駄だ」を表す表現はどれか。\nア：It is no use ～ing\nイ：It is easy to ～\nウ：It is time to ～", d:"★★☆", a:["ア"]},
-    {q:"「～することを楽しみにしている」を表す表現を書け。", d:"★★☆", a:["look forward to ～ing"]},
-    {q:"「～する価値がある」を表す表現を書け。", d:"★★☆", a:["be worth ～ing"]},
-    {q:"「～することに慣れている」を表す表現を書け。", d:"★★☆", a:["be used to ～ing"]},
+    {q:"「〜する気がする」を表す表現を書け。", d:"★☆☆", a:["feel like ～ing"]},
+    {q:"「〜することを提案する」という意味になる動詞を書け。", d:"★☆☆", a:["suggest"]},
+    {q:"「〜することを避ける」という意味の動詞を書け。", d:"★☆☆", a:["avoid"]},
+    {q:"「〜することを楽しむ」という意味の動詞を書け。", d:"★☆☆", a:["enjoy"]},
+    {q:"「〜するのは無駄だ」を表す表現はどれか。\nア：It is no use 〜ing\nイ：It is easy to 〜\nウ：It is time to 〜", d:"★★☆", a:["ア"]},
+    {q:"「〜することを楽しみにしている」を表す表現を書け。", d:"★★☆", a:["look forward to ～ing"]},
+    {q:"「〜する価値がある」を表す表現を書け。", d:"★★☆", a:["be worth ～ing"]},
+    {q:"「〜することに慣れている」を表す表現を書け。", d:"★★☆", a:["be used to ～ing"]},
     {q:"次の語を並び替えて文を完成させよ。\n(I / feel / like / going / for / a / drive)", d:"★★☆", a:["I feel like going for a drive"]},
     {q:"次の語を並び替えて文を完成させよ。\n(I / looking / forward / am / hearing / to / you / from)", d:"★★★", a:["I am looking forward to hearing from you"]},
     {q:"次の語を並び替えて文を完成させよ。\n(What / say / do / you / going / to / movies / the)", d:"★★★", a:["What do you say to going to the movies"]},
-    {q:"「～することを認める」という意味になる語を書け。", d:"★☆☆", a:["admit"]},
-    {q:"「～することをやめる」という意味になる語を書け。", d:"★☆☆", a:["quit"]},
+    {q:"「〜することを認める」という意味になる語を書け。", d:"★☆☆", a:["admit"]},
+    {q:"「〜することをやめる」という意味になる語を書け。", d:"★☆☆", a:["quit"]},
   ],
 
   "Lesson 19": [
@@ -46,7 +46,7 @@ const LOGIC_DATA = {
   ],
 
   "Lesson 20": [
-    {q:"「～しながら」という意味になる分詞構文の形を書け。", d:"★☆☆", a:["～ing"]},
+    {q:"「〜しながら」という意味になる分詞構文の形を書け。", d:"★☆☆", a:["～ing"]},
     {q:"Feeling sick, I went to see a doctor. の意味を書け。", d:"★★☆", a:["気分が悪かったので医者に行った","病気だったので医者に行った"]},
     {q:"次の語を並び替えて文を完成させよ。\n(I / around / walked / town / the / taking / pictures)", d:"★★☆", a:["I walked around the town taking pictures"]},
     {q:"次の語を並び替えて文を完成させよ。\n(Playing / hurt / soccer / leg / his / he)", d:"★★☆", a:["Playing soccer, he hurt his leg"]},
@@ -71,7 +71,7 @@ const LOGIC_DATA = {
   ],
 
   "Lesson 22": [
-    {q:"「～すること」を表す関係代名詞を書け。", d:"★☆☆", a:["what"]},
+    {q:"「〜すること」を表す関係代名詞を書け。", d:"★☆☆", a:["what"]},
     {q:"What is needed is change. の意味を書け。", d:"★★☆", a:["必要なのは変化である"]},
     {q:"次の語を並び替えて文を完成させよ。\n(hear / I / what / didn't / she / said)", d:"★★☆", a:["I didn't hear what she said"]},
     {q:"That's what I want to know. の意味を書け。", d:"★★☆", a:["それが私の知りたいことだ"]},
