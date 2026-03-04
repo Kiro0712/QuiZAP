@@ -50,6 +50,16 @@ function normalize(s){
 
 function qid(section, i){ return section + "::" + i; }
 
+function hasChapterData(data){
+  return !!data && Object.keys(data).length > 0;
+}
+
+function pickAvailableSubject(preferred = "公共"){
+  if(hasChapterData(SUBJECT_DEFAULTS[preferred])) return preferred;
+  const found = Object.keys(SUBJECT_DEFAULTS).find(subj => hasChapterData(SUBJECT_DEFAULTS[subj]));
+  return found || "公共";
+}
+
 function escapeHTML(str){
   return (str??"").toString()
     .replace(/&/g,"&amp;")
@@ -349,7 +359,6 @@ function renderStats(){
 
 function renderSearch(keyword){
   const kw = (keyword ?? "").trim();
-  const target = el("searchTarget") ? el("searchTarget").value : "q";
   const box = el("searchList");
   box.innerHTML = "";
 
@@ -371,10 +380,7 @@ function renderSearch(keyword){
   pool.forEach(({it, section, index})=>{
     const qText = it.q || "";
     const aText = (it.a || []).join(" / ");
-    const hay =
-      target === "q" ? qText :
-      target === "a" ? aText :
-      (qText + "\n" + aText);
+    const hay = qText + "\n" + aText;
 
     if(hay.includes(kw)) hit.push({it, section, index});
   });
@@ -391,9 +397,7 @@ function renderSearch(keyword){
 
     const qHit = (it.q || "").includes(kw);
     const aHit = (it.a || []).some(x => (x || "").includes(kw));
-    const where =
-      target === "both" ? (qHit && aHit ? "（問題＋答え）" : qHit ? "（問題）" : "（答え）") :
-      target === "q" ? "（問題）" : "（答え）";
+    const where = qHit && aHit ? "（問題＋答え）" : qHit ? "（問題）" : "（答え）";
 
     div.innerHTML =
       `<b>${escapeHTML(it.q || "")} <span class="small muted">${where}</span></b>` +
@@ -463,20 +467,17 @@ function loadCore(saved){
   };
 
   const hasCurrent = saved && saved.dataVersion === DATA_VERSION;
-
-  const mergedDataBySubject = {};
-  Object.keys(baseDataBySubject).forEach(subj=>{
-    const base = baseDataBySubject[subj] || {};
-    const savedSubj = (hasCurrent && saved.dataBySubject && saved.dataBySubject[subj]) ? saved.dataBySubject[subj] : null;
-    mergedDataBySubject[subj] = savedSubj ? ({ ...base, ...savedSubj }) : base;
-  });
-
-  state.dataBySubject = mergedDataBySubject;
+  state.dataBySubject = { ...baseDataBySubject };
   state.statsBySubject = hasCurrent && saved.statsBySubject ? saved.statsBySubject : {};
   state.mistakesBySubject = hasCurrent && saved.mistakesBySubject ? saved.mistakesBySubject : {};
   state.sectionBySubject = hasCurrent && saved.sectionBySubject ? saved.sectionBySubject : {};
 
-  state.subject = (saved && saved.subject && state.dataBySubject[saved.subject] != null) ? saved.subject : "公共";
+  const savedSubject = saved && saved.subject ? saved.subject : null;
+  if(savedSubject && hasChapterData(state.dataBySubject[savedSubject])){
+    state.subject = savedSubject;
+  }else{
+    state.subject = pickAvailableSubject("公共");
+  }
   el("subjectSel").value = state.subject;
 
   state.data = state.dataBySubject[state.subject] || {};
@@ -489,7 +490,6 @@ function loadCore(saved){
   state.reviewMode = false;
   buildSectionOptions();
   el("modeSel").value = state.mode;
-  el("dataArea").value = JSON.stringify(state.data, null, 2);
 
   makeOrder(false);
   renderStats();
@@ -503,7 +503,6 @@ function loadCore(saved){
 }
 
 function save(){
-  state.dataBySubject[state.subject] = state.data;
   state.statsBySubject[state.subject] = state.stats;
   state.mistakesBySubject[state.subject] = Array.from(state.mistakes);
   state.sectionBySubject[state.subject] = state.section;
@@ -512,42 +511,11 @@ function save(){
     subjectChosen: true,
     dataVersion: DATA_VERSION,
     subject: state.subject,
-    dataBySubject: state.dataBySubject,
     statsBySubject: state.statsBySubject,
     mistakesBySubject: state.mistakesBySubject,
     sectionBySubject: state.sectionBySubject,
     mode: state.mode
   }));
-}
-
-function applyData(){
-  try{
-    const parsed = JSON.parse(el("dataArea").value);
-    state.data = parsed;
-    state.dataBySubject[state.subject] = state.data;
-
-    const keys = Object.keys(state.data);
-    if(state.section !== "__ALL__" && !keys.includes(state.section)) state.section = "__ALL__";
-
-    buildSectionOptions();
-    makeOrder(false);
-    state.reviewMode = false;
-    save();
-    nextQuestion();
-    alert("反映しました！");
-  }catch(e){
-    alert("JSONの形式が壊れています：\n" + e.message);
-  }
-}
-
-function exportData(){
-  const txt = JSON.stringify(state.data, null, 2);
-  navigator.clipboard?.writeText(txt).then(()=>alert("コピーしました！")).catch(()=>{
-    el("dataArea").focus();
-    el("dataArea").select();
-    document.execCommand("copy");
-    alert("コピーしました！（fallback）");
-  });
 }
 
 function resetStats(){
@@ -612,8 +580,6 @@ function wire(){
     nextQuestion();
   });
 
-  el("searchTarget").addEventListener("change", ()=>renderSearch(el("searchBox").value));
-
   el("modeSel").addEventListener("change", ()=>{
     state.mode = el("modeSel").value;
     setModeUI();
@@ -629,8 +595,6 @@ function wire(){
   el("btnResetStats").onclick = ()=>resetStats();
   el("btnReviewMistakes").onclick = ()=>startReviewMistakes();
   el("searchBox").addEventListener("input", (e)=>renderSearch(e.target.value));
-  el("btnApplyData").onclick = ()=>applyData();
-  el("btnExportData").onclick = ()=>exportData();
 
   // 科目切替
   el("subjectSel").addEventListener("change", ()=>{
@@ -638,13 +602,17 @@ function wire(){
 
     state.subject = el("subjectSel").value;
     state.data = state.dataBySubject[state.subject] || SUBJECT_DEFAULTS[state.subject] || {};
+    if(!hasChapterData(state.data)){
+      state.subject = pickAvailableSubject("公共");
+      el("subjectSel").value = state.subject;
+      state.data = state.dataBySubject[state.subject] || SUBJECT_DEFAULTS[state.subject] || {};
+    }
     state.section = state.sectionBySubject[state.subject] || "__ALL__";
     state.stats = state.statsBySubject[state.subject] || {seen:0, ok:0, ng:0, streak:0};
     state.mistakes = new Set(state.mistakesBySubject[state.subject] || []);
 
     state.reviewMode = false;
     buildSectionOptions();
-    el("dataArea").value = JSON.stringify(state.data, null, 2);
 
     makeOrder(false);
     renderStats();
