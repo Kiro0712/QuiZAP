@@ -1,13 +1,20 @@
 ﻿// 追加科目データ
 const LOGIC_DATA_SOURCE = (typeof LOGIC_DATA === "undefined") ? {} : LOGIC_DATA;
 const BIO_DATA_SOURCE = (typeof BIO_DATA === "undefined") ? {} : BIO_DATA;
+const EC1_DATA_SOURCE = (typeof EC1_DATA === "undefined") ? {} : EC1_DATA;
+const MATH1_DATA_SOURCE = (typeof MATH1_DATA === "undefined") ? {} : MATH1_DATA;
+const PHYSICS_BASIC_DATA_SOURCE = (typeof PHYSICS_BASIC_DATA === "undefined") ? {} : PHYSICS_BASIC_DATA;
 
 const SUBJECT_DEFAULTS = {
   "公共": DEFAULT_DATA,
   "保健": HEALTH_DATA,
   "論理・表現Ⅰ": LOGIC_DATA_SOURCE,
   "生物基礎": BIO_DATA_SOURCE,
+  "ＥＣⅠ": EC1_DATA_SOURCE,
+  "数学Ⅰ": MATH1_DATA_SOURCE,
+  "物理基礎": PHYSICS_BASIC_DATA_SOURCE,
 };
+const DISABLED_SUBJECTS = new Set(["ＥＣⅠ", "数学Ⅰ", "物理基礎"]);
 
 /* =========================
    2) アプリ本体
@@ -23,6 +30,7 @@ const state = {
   statsBySubject: null,
   mistakesBySubject: null,
   sectionBySubject: null,
+  answersBySubject: null,
 
   data: null,
   section: null,
@@ -33,6 +41,7 @@ const state = {
   revealed: false,
   stats: {seen:0, ok:0, ng:0, streak:0},
   mistakes: new Set(),
+  judgedInOrder: new Set(),
   reviewMode: false,
   orderBuilder: {active:false, tokens:[], selected:[]}
 };
@@ -51,13 +60,112 @@ function normalize(s){
 
 function qid(section, i){ return section + "::" + i; }
 
+function resetJudgedInOrder(){
+  state.judgedInOrder = new Set();
+}
+
+function markCurrentAsJudged(){
+  if(!state.current || !state.current._id) return;
+  state.judgedInOrder.add(state.current._id);
+}
+
+function hasJudgedAllInOrder(){
+  if(!Array.isArray(state.order) || state.order.length === 0) return false;
+  return state.order.every(entry => state.judgedInOrder.has(qid(entry.section, entry.index)));
+}
+
+function ensureSubjectAnswerStore(subject){
+  if(!state.answersBySubject || typeof state.answersBySubject !== "object"){
+    state.answersBySubject = {};
+  }
+  if(!state.answersBySubject[subject] || typeof state.answersBySubject[subject] !== "object"){
+    state.answersBySubject[subject] = {};
+  }
+  return state.answersBySubject[subject];
+}
+
+function getSavedAnswerEntry(subject, id){
+  if(!subject || !id) return null;
+  const bySubject = state.answersBySubject && state.answersBySubject[subject];
+  if(!bySubject || typeof bySubject !== "object") return null;
+
+  const raw = bySubject[id];
+  if(typeof raw === "string") return {input: raw}; // 旧フォーマット互換
+  if(!raw || typeof raw !== "object") return null;
+  return raw;
+}
+
+function rememberCurrentAnswer(){
+  if(state.mode !== "input") return;
+  if(!state.current || !state.current._id) return;
+  if(state.idx < 0 || !state.order[state.idx]) return;
+  const input = el("ansInput");
+  if(!input) return;
+
+  const store = ensureSubjectAnswerStore(state.subject);
+  const entry = {input: (input.value || "").toString()};
+  if(state.orderBuilder.active){
+    entry.orderSelected = Array.isArray(state.orderBuilder.selected)
+      ? state.orderBuilder.selected.slice()
+      : [];
+  }
+  store[state.current._id] = entry;
+}
+
+function restoreCurrentAnswer(){
+  if(state.mode !== "input") return;
+  if(!state.current || !state.current._id) return;
+
+  const input = el("ansInput");
+  if(!input) return;
+
+  const entry = getSavedAnswerEntry(state.subject, state.current._id);
+  if(!entry) return;
+
+  if(state.orderBuilder.active){
+    const selected = Array.isArray(entry.orderSelected)
+      ? entry.orderSelected.filter(id => state.orderBuilder.tokens.some(t => t.id === id))
+      : [];
+    if(selected.length > 0){
+      state.orderBuilder.selected = selected;
+      renderOrderBuilder();
+      return;
+    }
+  }
+
+  input.value = (entry.input || "").toString();
+}
+
 function hasChapterData(data){
   return !!data && Object.keys(data).length > 0;
 }
 
+function isSubjectSelectable(subj){
+  if(!subj) return false;
+  if(DISABLED_SUBJECTS.has(subj)) return false;
+  return hasChapterData(SUBJECT_DEFAULTS[subj]);
+}
+
+function applySubjectAvailability(){
+  const subjectSel = el("subjectSel");
+  if(subjectSel){
+    Array.from(subjectSel.options).forEach(opt => {
+      opt.disabled = DISABLED_SUBJECTS.has(opt.value);
+    });
+  }
+
+  const modal = el("subjectModal");
+  if(modal){
+    modal.querySelectorAll("button[data-subject]").forEach(btn => {
+      const subj = btn.getAttribute("data-subject") || "";
+      btn.disabled = DISABLED_SUBJECTS.has(subj);
+    });
+  }
+}
+
 function pickAvailableSubject(preferred = "公共"){
-  if(hasChapterData(SUBJECT_DEFAULTS[preferred])) return preferred;
-  const found = Object.keys(SUBJECT_DEFAULTS).find(subj => hasChapterData(SUBJECT_DEFAULTS[subj]));
+  if(isSubjectSelectable(preferred)) return preferred;
+  const found = Object.keys(SUBJECT_DEFAULTS).find(isSubjectSelectable);
   return found || "公共";
 }
 
@@ -174,6 +282,7 @@ function addOrderToken(id){
   if(state.orderBuilder.selected.includes(id)) return;
   state.orderBuilder.selected.push(id);
   renderOrderBuilder();
+  rememberCurrentAnswer();
 }
 
 function removeOrderTokenAt(pos){
@@ -181,18 +290,21 @@ function removeOrderTokenAt(pos){
   if(pos < 0 || pos >= state.orderBuilder.selected.length) return;
   state.orderBuilder.selected.splice(pos, 1);
   renderOrderBuilder();
+  rememberCurrentAnswer();
 }
 
 function popOrderToken(){
   if(!state.orderBuilder.active) return;
   state.orderBuilder.selected.pop();
   renderOrderBuilder();
+  rememberCurrentAnswer();
 }
 
 function clearOrderTokens(){
   if(!state.orderBuilder.active) return;
   state.orderBuilder.selected = [];
   renderOrderBuilder();
+  rememberCurrentAnswer();
 }
 
 function renderOrderBuilder(){
@@ -353,6 +465,7 @@ function makeOrder(fromMistakes=false){
 
   state.order = pool;
   state.idx = -1;
+  resetJudgedInOrder();
   updateNavButtons();
 }
 
@@ -380,12 +493,31 @@ function updateNavButtons(){
   if(btnNext) btnNext.style.display = atEnd ? "none" : "inline-block";
 
   if(btnReview){
-    if(state.mode === "input" && atEnd && total > 0){
-      btnReview.style.display = "inline-block";
-    }else if(state.mode === "input"){
-      btnReview.style.display = "none";
-    }
+    const showReview =
+      state.mode === "input" &&
+      !state.reviewMode &&
+      atEnd &&
+      total > 0 &&
+      hasJudgedAllInOrder();
+    btnReview.style.display = showReview ? "inline-block" : "none";
   }
+}
+
+function currentSolvedHint(){
+  const total = state.order.length;
+  const atEnd = total > 0 && state.idx >= total - 1;
+  const allJudged = hasJudgedAllInOrder();
+
+  if(state.mode === "input" && !state.reviewMode && atEnd && allJudged){
+    return "復習に入りましょう。";
+  }
+  if(state.mode === "input" && !state.reviewMode && atEnd && !allJudged){
+    return "未判定の問題を判定しましょう。";
+  }
+  if(state.mode === "input" && state.reviewMode && atEnd){
+    return "お疲れさまでした！";
+  }
+  return "次へどうぞ。";
 }
 
 function setModeUI(){
@@ -405,14 +537,17 @@ function setModeUI(){
   const btnShow = el("btnShow");
   const btnReview = el("btnReviewMistakes");
   const btnReset = el("btnResetStats");
+  const btnSave = el("btnSaveStats");
 
   if(state.mode === "flash"){
     if(btnShow) btnShow.style.display = "inline-block";
     if(btnReview) btnReview.style.display = "none";
     if(btnReset) btnReset.style.display = "none";
+    if(btnSave) btnSave.style.display = "none";
   }else{
     if(btnShow) btnShow.style.display = "none";
     if(btnReset) btnReset.style.display = "inline-block";
+    if(btnSave) btnSave.style.display = "inline-block";
   }
 
   el("inputArea").style.display = isInput ? "block" : "none";
@@ -509,10 +644,12 @@ function renderCurrent(){
   const dl = el("diffLine");
   if(dl) dl.textContent = state.current?.d ? `難易度：${state.current.d}` : "";
 
+  restoreCurrentAnswer();
   updateNavButtons();
 }
 
 function nextQuestion(){
+  rememberCurrentAnswer();
   if(state.order.length === 0){
     el("qText").textContent = "この章に問題がありません。";
     resetOrderBuilderUI();
@@ -543,6 +680,7 @@ function nextQuestion(){
 }
 
 function prevQuestion(){
+  rememberCurrentAnswer();
   if(state.order.length === 0) return;
   if(state.idx <= 0){
     state.idx = 0;
@@ -561,21 +699,28 @@ function judge(){
   if(!state.current) return;
   const useOrderJudge = !!state.orderBuilder.active;
   const userRaw = el("ansInput").value;
+  rememberCurrentAnswer();
   const user = useOrderJudge ? normalizeForOrder(userRaw) : normalize(userRaw);
   const answers = (state.current.a || []).map(x => useOrderJudge ? normalizeForOrder(x) : normalize(x));
   const ok = answers.includes(user);
 
   state.stats.seen += 1;
+  markCurrentAsJudged();
   if(ok){
     state.stats.ok += 1;
     state.stats.streak += 1;
     state.mistakes.delete(state.current._id);
-    el("hintLine").innerHTML = `<span class="ok"><b>○ 正解！</b></span>　次へどうぞ。`;
+    el("hintLine").innerHTML = `<span class="ok"><b>○ 正解！</b></span>　${currentSolvedHint()}`;
   }else{
     state.stats.ng += 1;
     state.stats.streak = 0;
     state.mistakes.add(state.current._id);
-    el("hintLine").innerHTML = `<span class="ng"><b>× ちがう</b></span>　答えを表示します。`;
+    const total = state.order.length;
+    const atEnd = total > 0 && state.idx >= total - 1;
+    const ngHint = (state.mode === "input" && !state.reviewMode && atEnd && hasJudgedAllInOrder())
+      ? "復習に入りましょう。"
+      : "答えを表示します。";
+    el("hintLine").innerHTML = `<span class="ng"><b>× 不正解...</b></span>　${ngHint}`;
     showAnswer();
   }
   renderStats();
@@ -585,10 +730,12 @@ function judge(){
 
 function giveUp(){
   if(!state.current) return;
+  rememberCurrentAnswer();
   state.stats.seen += 1;
   state.stats.ng += 1;
   state.stats.streak = 0;
   state.mistakes.add(state.current._id);
+  markCurrentAsJudged();
   renderStats();
   showAnswer();
   el("hintLine").innerHTML = `<span class="ng"><b>×</b></span>　復習リストに入れました。`;
@@ -654,9 +801,11 @@ function renderSearch(keyword){
       (it.d ? `<div class="small muted">難易度：${escapeHTML(it.d)}</div>` : "");
 
     div.onclick = ()=>{
+      rememberCurrentAnswer();
       state.reviewMode = false;
       state.order = [{section, index}];
       state.idx = -1;
+      resetJudgedInOrder();
       nextQuestion();
     };
 
@@ -682,6 +831,7 @@ function closeSubjectModal(){
 
 function pickSubjectFromModal(subj){
   // データが無い科目は現状選択不可（ボタンdisabled）
+  if(DISABLED_SUBJECTS.has(subj)) return;
   state.subject = subj;
   el("subjectSel").value = subj;
 
@@ -723,6 +873,9 @@ function loadCore(saved){
     "保健": SUBJECT_DEFAULTS["保健"],
     "論理・表現Ⅰ": SUBJECT_DEFAULTS["論理・表現Ⅰ"],
     "生物基礎": SUBJECT_DEFAULTS["生物基礎"],
+    "ＥＣⅠ": SUBJECT_DEFAULTS["ＥＣⅠ"],
+    "数学Ⅰ": SUBJECT_DEFAULTS["数学Ⅰ"],
+    "物理基礎": SUBJECT_DEFAULTS["物理基礎"],
   };
 
   const hasCurrent = saved && saved.dataVersion === DATA_VERSION;
@@ -730,9 +883,11 @@ function loadCore(saved){
   state.statsBySubject = hasCurrent && saved.statsBySubject ? saved.statsBySubject : {};
   state.mistakesBySubject = hasCurrent && saved.mistakesBySubject ? saved.mistakesBySubject : {};
   state.sectionBySubject = hasCurrent && saved.sectionBySubject ? saved.sectionBySubject : {};
+  state.answersBySubject = hasCurrent && saved.answersBySubject ? saved.answersBySubject : {};
+  applySubjectAvailability();
 
   const savedSubject = saved && saved.subject ? saved.subject : null;
-  if(savedSubject && hasChapterData(state.dataBySubject[savedSubject])){
+  if(savedSubject && isSubjectSelectable(savedSubject)){
     state.subject = savedSubject;
   }else{
     state.subject = pickAvailableSubject("公共");
@@ -770,6 +925,7 @@ function save(){
   state.statsBySubject[state.subject] = state.stats;
   state.mistakesBySubject[state.subject] = Array.from(state.mistakes);
   state.sectionBySubject[state.subject] = state.section;
+  ensureSubjectAnswerStore(state.subject);
 
   localStorage.setItem(LS_KEY, JSON.stringify({
     subjectChosen: true,
@@ -778,6 +934,7 @@ function save(){
     statsBySubject: state.statsBySubject,
     mistakesBySubject: state.mistakesBySubject,
     sectionBySubject: state.sectionBySubject,
+    answersBySubject: state.answersBySubject,
     mode: state.mode
   }));
 }
@@ -795,17 +952,26 @@ function resetStats(){
   hideAnswer();
   el("hintLine").textContent = "";
 
+  // 科目単位で保存データを先に初期化（次の問題表示時の復元を防ぐ）
+  state.statsBySubject[state.subject] = state.stats;
+  state.mistakesBySubject[state.subject] = [];
+  ensureSubjectAnswerStore(state.subject);
+  state.answersBySubject[state.subject] = {};
+
   // 出題順を作り直して最初の問題へ
   makeOrder(false);
   state.idx = -1;
   nextQuestion();
 
-  // 科目単位で保存
-  state.statsBySubject[state.subject] = state.stats;
-  state.mistakesBySubject[state.subject] = [];
-
   save();
   updateNavButtons();
+}
+
+function saveStats(){
+  if(!confirm("進捗をこの端末に保存しますか？")) return;
+  rememberCurrentAnswer();
+  save();
+  alert("進捗をこの端末に保存しました。");
 }
 
 function startReviewMistakes(){
@@ -835,6 +1001,7 @@ function wire(){
   }
 
   el("sectionSel").addEventListener("change", ()=>{
+    rememberCurrentAnswer();
     state.section = el("sectionSel").value;
     state.reviewMode = false;
     makeOrder(false);
@@ -845,6 +1012,7 @@ function wire(){
   });
 
   el("modeSel").addEventListener("change", ()=>{
+    rememberCurrentAnswer();
     state.mode = el("modeSel").value;
     setModeUI();
     if(state.current) renderCurrent();
@@ -857,6 +1025,7 @@ function wire(){
   el("btnShow").onclick = ()=> state.revealed ? hideAnswer() : showAnswer();
   el("btnJudge").onclick = ()=>judge();
   el("btnGiveUp").onclick = ()=>giveUp();
+  el("btnSaveStats").onclick = ()=>saveStats();
   el("btnResetStats").onclick = ()=>resetStats();
   el("btnReviewMistakes").onclick = ()=>startReviewMistakes();
   el("btnOrderBack").onclick = ()=>popOrderToken();
@@ -865,9 +1034,14 @@ function wire(){
 
   // 科目切替
   el("subjectSel").addEventListener("change", ()=>{
+    rememberCurrentAnswer();
     save();
 
     state.subject = el("subjectSel").value;
+    if(DISABLED_SUBJECTS.has(state.subject)){
+      state.subject = pickAvailableSubject("公共");
+      el("subjectSel").value = state.subject;
+    }
     state.data = state.dataBySubject[state.subject] || SUBJECT_DEFAULTS[state.subject] || {};
     if(!hasChapterData(state.data)){
       state.subject = pickAvailableSubject("公共");
@@ -915,6 +1089,9 @@ function maybeRunTests(){
   assert(!!SUBJECT_DEFAULTS["保健"], "has 保健");
   assert(!!SUBJECT_DEFAULTS["論理・表現Ⅰ"], "has 論理・表現Ⅰ");
   assert(!!SUBJECT_DEFAULTS["生物基礎"], "has 生物基礎");
+  assert(!!SUBJECT_DEFAULTS["ＥＣⅠ"], "has ＥＣⅠ");
+  assert(!!SUBJECT_DEFAULTS["数学Ⅰ"], "has 数学Ⅰ");
+  assert(!!SUBJECT_DEFAULTS["物理基礎"], "has 物理基礎");
 
   assert(Array.isArray(HEALTH_DATA["9 喫煙と健康"]) && HEALTH_DATA["9 喫煙と健康"].length > 0, "health chapter 9 exists");
   assert(Array.isArray(HEALTH_DATA["10 飲酒と健康"]) && HEALTH_DATA["10 飲酒と健康"].length > 0, "health chapter 10 exists");

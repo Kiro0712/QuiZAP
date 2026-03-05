@@ -122,8 +122,11 @@
       <button class="modalBtn" data-subject="保健">→　保健</button>
       <button class="modalBtn" data-subject="論理・表現Ⅰ">→　論理・表現Ⅰ</button>
       <button class="modalBtn" data-subject="生物基礎">→　生物基礎</button>
+      <button class="modalBtn" data-subject="ＥＣⅠ" disabled>→　ＥＣⅠ</button>
+      <button class="modalBtn" data-subject="数学Ⅰ" disabled>→　数学Ⅰ</button>
+      <button class="modalBtn" data-subject="物理基礎" disabled>→　物理基礎</button>
     </div>
-    <div class="modalNote">※科目を選ぶと問題が始まります。</div>
+    <div class="modalNote">※科目を選ぶと問題が始まります。非表示の科目は現在準備中です。</div>
   </div>
 </div>
 
@@ -136,6 +139,9 @@
         <option value="保健">保健</option>
         <option value="論理・表現Ⅰ">論理・表現Ⅰ</option>
         <option value="生物基礎">生物基礎</option>
+        <option value="ＥＣⅠ" disabled>ＥＣⅠ</option>
+        <option value="数学Ⅰ" disabled>数学Ⅰ</option>
+        <option value="物理基礎" disabled>物理基礎</option>
       </select>
     </div>
 
@@ -163,6 +169,7 @@
     <div class="sep"></div>
 
     <div class="row" style="margin-top:10px">
+      <button id="btnSaveStats" class="bad">進捗セーブ</button>
       <button id="btnResetStats">進捗リセット</button>
     </div>
   </section>
@@ -187,7 +194,7 @@
       <label>あなたの答え（例：プラザ合意）</label>
       <input id="ansInput" autocomplete="off" placeholder="ここに入力" />
       <div id="orderArea" class="orderArea">
-        <div class="small muted">語句をタップして並び替えてください（上段をタップで取り消し）</div>
+        <div class="small muted">語句をタップして並び替えてください（上段をタップで取り消します）。</div>
         <div id="orderAnswerBox" class="orderBox" style="margin-top:6px"></div>
         <div id="orderBankBox" class="orderBox tokenBank"></div>
         <div class="row" style="margin-top:8px">
