@@ -217,29 +217,29 @@
     <h2 id="subjectModalTitle">出題科目・テストを選択してください</h2>
 
     <div class="modalList grouped">
-      <div class="modalSection">
-        <div class="modalSectionTitle">学年末テスト</div>
-        <div class="modalSectionBody">
-          <button class="modalBtn" data-subject="公共">→　公共</button>
-          <button class="modalBtn" data-subject="保健">→　保健</button>
-          <button class="modalBtn" data-subject="論理・表現Ⅰ">→　論理・表現Ⅰ</button>
-          <button class="modalBtn" data-subject="生物基礎">→　生物基礎</button>
-          <button class="modalBtn" data-subject="ＥＣⅠ">→　ＥＣⅠ</button>
-          <button class="modalBtn" data-subject="数学Ⅰ">→　数学Ⅰ</button>
-          <button class="modalBtn" data-subject="物理基礎">→　物理基礎</button>
-        </div>
-      </div>
+      <div class="modalList grouped">
+        <details class="modalSection" id="finalTestGroup" open>
+          <summary class="modalSectionTitle collapsible">学年末テスト</summary>
+          <div class="modalSectionBody">
+            <button class="modalBtn" data-subject="公共">→　公共</button>
+      			<button class="modalBtn" data-subject="保健">→　保健</button>
+      			<button class="modalBtn" data-subject="論理・表現Ⅰ">→　論理・表現Ⅰ</button>
+      			<button class="modalBtn" data-subject="生物基礎">→　生物基礎</button>
+      			<button class="modalBtn" data-subject="ＥＣⅠ">→　ＥＣⅠ</button>
+      			<button class="modalBtn" data-subject="数学Ⅰ">→　数学Ⅰ</button>
+      			<button class="modalBtn" data-subject="物理基礎">→　物理基礎</button>
+    			</div>
+  			</details>
 
-      <details class="modalSection" open>
-        <summary class="modalSectionTitle collapsible">朝学習テスト</summary>
-        <div class="modalSectionBody">
-          <button class="modalBtn" data-subject="朝学習テスト⑧">→　朝学習テスト⑧</button>
-          <button class="modalBtn" data-subject="朝学習テスト⑨" disabled>→　朝学習テスト⑨</button>
-          <button class="modalBtn" data-subject="朝学習テスト⑩" disabled>→　朝学習テスト⑩</button>
-        </div>
-      </details>
-    </div>
-
+  			<details class="modalSection" id="morningTestGroup">
+    			<summary class="modalSectionTitle collapsible">朝学習テスト</summary>
+    			<div class="modalSectionBody">
+     				<button class="modalBtn" data-subject="朝学習テスト⑧">→　朝学習テスト⑧</button>
+      			<button class="modalBtn" data-subject="朝学習テスト⑨" disabled>→　朝学習テスト⑨</button>
+      			<button class="modalBtn" data-subject="朝学習テスト⑩" disabled>→　朝学習テスト⑩</button>
+    			</div>
+  			</details>
+			</div>
     <div class="modalNote">※科目・テストを選ぶと問題が始まります。</div>
   </div>
 </div>
@@ -378,6 +378,23 @@
   })().catch((err) => {
     console.error(err);
   });
+
+  const finalTestGroup = document.getElementById("finalTestGroup");
+  const morningTestGroup = document.getElementById("morningTestGroup");
+
+  if(finalTestGroup && morningTestGroup){
+    finalTestGroup.addEventListener("toggle", () => {
+      if(finalTestGroup.open){
+        morningTestGroup.open = false;
+      }
+    });
+
+    morningTestGroup.addEventListener("toggle", () => {
+      if(morningTestGroup.open){
+        finalTestGroup.open = false;
+      }
+    });
+  }
 </script>
 </body>
 </html>
